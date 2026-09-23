@@ -1,0 +1,4522 @@
+{
+  "info": {
+    "name": "ArteVia - Test di sicurezza e funzionali",
+    "description": "Esegui le cartelle 00-09 in ordine con il Collection Runner. La cartella 10 va eseguita una richiesta alla volta, dopo la query SQL indicata nella descrizione di ciascuna; l'access token dura 15 minuti, se scade reinvia la 1.10.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base",
+      "value": "https://localhost:8443"
+    },
+    {
+      "key": "u",
+      "value": ""
+    },
+    {
+      "key": "u2",
+      "value": ""
+    },
+    {
+      "key": "uh",
+      "value": ""
+    },
+    {
+      "key": "at",
+      "value": ""
+    },
+    {
+      "key": "at2",
+      "value": ""
+    },
+    {
+      "key": "at_hack",
+      "value": ""
+    },
+    {
+      "key": "rt",
+      "value": ""
+    },
+    {
+      "key": "rt_old",
+      "value": ""
+    },
+    {
+      "key": "pCheap",
+      "value": ""
+    },
+    {
+      "key": "pCheapPrice",
+      "value": ""
+    },
+    {
+      "key": "pExp",
+      "value": ""
+    },
+    {
+      "key": "pExpStock",
+      "value": ""
+    },
+    {
+      "key": "pLow",
+      "value": ""
+    },
+    {
+      "key": "pLowStock",
+      "value": ""
+    },
+    {
+      "key": "balance",
+      "value": ""
+    },
+    {
+      "key": "plan1",
+      "value": ""
+    },
+    {
+      "key": "plan1Disc",
+      "value": ""
+    },
+    {
+      "key": "plan2",
+      "value": ""
+    },
+    {
+      "key": "plan2Disc",
+      "value": ""
+    },
+    {
+      "key": "expectedDiscounted",
+      "value": ""
+    },
+    {
+      "key": "imageUrl",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "00 - Setup utenti",
+      "item": [
+        {
+          "name": "Genera nomi utente univoci",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/actuator/health",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const s = Date.now();",
+                  "pm.collectionVariables.set(\"u\", \"mario\" + s);",
+                  "pm.collectionVariables.set(\"u2\", \"luigi\" + s);",
+                  "pm.collectionVariables.set(\"uh\", \"hacker\" + s);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Applicazione UP\", () => pm.expect(pm.response.json().status).to.eql(\"UP\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registra utente 2 (luigi)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/auth/register",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"{{u2}}\",\"name\":\"Mario\",\"lastname\":\"Rossi\",\"email\":\"{{u2}}@test.com\",\"address\":\"Via Roma 1\",\"age\":25,\"password\":\"Password1!\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login utente 2",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/auth/login",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"usernameOrEmail\":\"{{u2}}\",\"password\":\"Password1!\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set(\"at2\", pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "01 - Registrazione e login",
+      "item": [
+        {
+          "name": "1.1 Registrazione valida",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/auth/register",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"{{u}}\",\"name\":\"Mario\",\"lastname\":\"Rossi\",\"email\":\"{{u}}@test.com\",\"address\":\"Via Roma 1\",\"age\":25,\"password\":\"Password1!\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Messaggio di conferma\", () => pm.expect(pm.response.json().message).to.include(\"registrato\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.2 Mass assignment: registrazione con role ADMIN",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/auth/register",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"{{uh}}\",\"name\":\"Mario\",\"lastname\":\"Rossi\",\"email\":\"{{uh}}@test.com\",\"address\":\"Via Roma 1\",\"age\":25,\"password\":\"Password1!\",\"role\":\"ADMIN\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Il campo role deve essere ignorato. La verifica vera e' la 1.3b: l'utente non puo' usare gli endpoint admin."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.3a Login utente 'hacker'",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/auth/login",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"usernameOrEmail\":\"{{uh}}\",\"password\":\"Password1!\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set(\"at_hack\", pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.3b Utente 'hacker' prova a creare un prodotto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/admin/products",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "products"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Hack\",\"description\":\"x\",\"price\":1.00,\"stockQuantity\":1,\"category\":\"Test\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at_hack}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 403\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"Ruolo USER, non ADMIN\", () => pm.expect(pm.response.json().error).to.include(\"permessi\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.4 Registrazione username duplicato",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/auth/register",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"{{u}}\",\"name\":\"Mario\",\"lastname\":\"Rossi\",\"email\":\"altro{{u}}@test.com\",\"address\":\"Via Roma 1\",\"age\":25,\"password\":\"Password1!\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Username gia in uso\", () => pm.expect(pm.response.json().error).to.include(\"Username\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.5 Registrazione email duplicata",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/auth/register",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"altro{{u}}\",\"name\":\"Mario\",\"lastname\":\"Rossi\",\"email\":\"{{u}}@test.com\",\"address\":\"Via Roma 1\",\"age\":25,\"password\":\"Password1!\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Email gia in uso\", () => pm.expect(pm.response.json().error).to.include(\"Email\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.6 Registrazione con campi non validi",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/auth/register",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"\",\"name\":\"\",\"lastname\":\"R\",\"email\":\"nonvalida\",\"age\":10,\"password\":\"abc\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));",
+                  "const b = pm.response.json();",
+                  "pm.test(\"Errore per ogni campo\", () => { pm.expect(b).to.have.property(\"email\"); pm.expect(b).to.have.property(\"password\"); pm.expect(b).to.have.property(\"age\"); pm.expect(b).to.have.property(\"username\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.7 Registrazione con JSON malformato",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/auth/register",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Richiede il fix HttpMessageNotReadableException nel GlobalExceptionHandler (prima dava 500)."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.8 Login password errata",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/auth/login",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"usernameOrEmail\":\"{{u}}\",\"password\":\"Sbagliata1!\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Messaggio generico\", () => pm.expect(pm.response.json().error).to.eql(\"Credenziali non valide\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.9 Login utente inesistente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/auth/login",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"usernameOrEmail\":\"nessuno_{{u}}\",\"password\":\"Sbagliata1!\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Stesso messaggio del caso password errata (no user enumeration)\", () => pm.expect(pm.response.json().error).to.eql(\"Credenziali non valide\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.10 Login valido con email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/auth/login",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"usernameOrEmail\":\"{{u}}@test.com\",\"password\":\"Password1!\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "pm.collectionVariables.set(\"at\", b.accessToken);",
+                  "pm.collectionVariables.set(\"rt\", b.refreshToken);",
+                  "pm.test(\"Access token 15 minuti\", () => pm.expect(b.expiresIn).to.eql(900));",
+                  "pm.test(\"Refresh token NON e' un JWT\", () => pm.expect(b.refreshToken.split(\".\").length).to.not.eql(3));",
+                  "const cookies = pm.response.headers.filter(h => h.key.toLowerCase() === \"set-cookie\").map(h => h.value);",
+                  "pm.test(\"Due cookie impostati\", () => pm.expect(cookies.length).to.eql(2));",
+                  "cookies.forEach(c => pm.test(\"Flag cookie: \" + c.split(\"=\")[0], () => {",
+                  "    pm.expect(c).to.include(\"HttpOnly\"); pm.expect(c).to.include(\"Secure\"); pm.expect(c).to.include(\"SameSite=Lax\");",
+                  "}));",
+                  "const CJ = require(\"crypto-js\");",
+                  "const dec = s => JSON.parse(CJ.enc.Base64.parse(s.replace(/-/g,\"+\").replace(/_/g,\"/\")).toString(CJ.enc.Utf8));",
+                  "const payload = dec(b.accessToken.split(\".\")[1]);",
+                  "pm.test(\"JWT senza ruolo nel payload\", () => { pm.expect(payload).to.not.have.property(\"role\"); pm.expect(payload).to.not.have.property(\"roles\"); pm.expect(payload).to.not.have.property(\"authorities\"); });",
+                  "pm.test(\"exp - iat = 900 secondi\", () => pm.expect(payload.exp - payload.iat).to.eql(900));",
+                  "pm.test(\"subject = username\", () => pm.expect(payload.sub).to.eql(pm.collectionVariables.get(\"u\")));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Attacchi sul JWT",
+      "item": [
+        {
+          "name": "2.1 Endpoint protetto senza token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/api/v1/wallet/mywallet",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wallet",
+                "mywallet"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "401 dopo il fix dell'authenticationEntryPoint (prima: 403 vuoto)."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.2 Token con payload manomesso (sub cambiato)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/api/v1/wallet/mywallet",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wallet",
+                "mywallet"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tampered}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const CJ = require(\"crypto-js\");",
+                  "const [h, p, s] = pm.collectionVariables.get(\"at\").split(\".\");",
+                  "const payload = JSON.parse(CJ.enc.Base64.parse(p.replace(/-/g,\"+\").replace(/_/g,\"/\")).toString(CJ.enc.Utf8));",
+                  "payload.sub = pm.collectionVariables.get(\"u2\");",
+                  "const enc = o => CJ.enc.Base64.stringify(CJ.enc.Utf8.parse(JSON.stringify(o))).replace(/=+$/,\"\").replace(/\\+/g,\"-\").replace(/\\//g,\"_\");",
+                  "pm.variables.set(\"tampered\", h + \".\" + enc(payload) + \".\" + s);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.3 Token con alg none",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/api/v1/wallet/mywallet",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wallet",
+                "mywallet"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{nonetoken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const CJ = require(\"crypto-js\");",
+                  "const enc = o => CJ.enc.Base64.stringify(CJ.enc.Utf8.parse(JSON.stringify(o))).replace(/=+$/,\"\").replace(/\\+/g,\"-\").replace(/\\//g,\"_\");",
+                  "const now = Math.floor(Date.now()/1000);",
+                  "pm.variables.set(\"nonetoken\", enc({alg:\"none\"}) + \".\" + enc({sub: pm.collectionVariables.get(\"u\"), iat: now, exp: now + 900}) + \".\");"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.4 Token firmato con un'altra chiave",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/api/v1/wallet/mywallet",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wallet",
+                "mywallet"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{forged}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const CJ = require(\"crypto-js\");",
+                  "const enc = o => CJ.enc.Base64.stringify(CJ.enc.Utf8.parse(JSON.stringify(o))).replace(/=+$/,\"\").replace(/\\+/g,\"-\").replace(/\\//g,\"_\");",
+                  "const now = Math.floor(Date.now()/1000);",
+                  "const unsigned = enc({alg:\"HS384\"}) + \".\" + enc({sub: pm.collectionVariables.get(\"u\"), iat: now, exp: now + 900});",
+                  "const sig = CJ.HmacSHA384(unsigned, \"chiaveDellAttaccanteLungaAlmeno48CaratteriPerHS384!!\").toString(CJ.enc.Base64).replace(/=+$/,\"\").replace(/\\+/g,\"-\").replace(/\\//g,\"_\");",
+                  "pm.variables.set(\"forged\", unsigned + \".\" + sig);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.5 Token valido (controprova)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/api/v1/wallet/mywallet",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wallet",
+                "mywallet"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Refresh token e logout",
+      "item": [
+        {
+          "name": "3.1 Refresh con token nel body",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/auth/refresh",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"refreshToken\":\"{{rt}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "pm.test(\"Nuovo refresh token diverso dal precedente\", () => pm.expect(b.refreshToken).to.not.eql(pm.collectionVariables.get(\"rt\")));",
+                  "pm.collectionVariables.set(\"rt_old\", pm.collectionVariables.get(\"rt\"));",
+                  "pm.collectionVariables.set(\"rt\", b.refreshToken);",
+                  "pm.collectionVariables.set(\"at\", b.accessToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.2 Riuso del refresh token gia' ruotato",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/auth/refresh",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"refreshToken\":\"{{rt_old}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Token non valido\", () => pm.expect(pm.response.json().error).to.include(\"non valido\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.3 Refresh con token inventato",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/auth/refresh",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"refreshToken\":\"00000000-0000-0000-0000-000000000000\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.4 Refresh senza token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/auth/refresh",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.5 Refresh silenzioso dal filtro (access token non valido + refresh cookie)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "accessToken=token-scaduto; refreshToken={{rt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/wallet/mywallet",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wallet",
+                "mywallet"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "const nuovo = pm.response.headers.filter(h => h.key.toLowerCase() === \"set-cookie\").map(h => h.value).find(v => v.startsWith(\"refreshToken=\"));",
+                  "pm.test(\"Il filtro emette un nuovo refresh token\", () => pm.expect(nuovo).to.be.ok);",
+                  "const valore = nuovo.split(\";\")[0].split(\"=\")[1];",
+                  "pm.test(\"Il refresh token e' stato ruotato\", () => pm.expect(valore).to.not.eql(pm.collectionVariables.get(\"rt\")));",
+                  "pm.collectionVariables.set(\"rt_old\", pm.collectionVariables.get(\"rt\"));",
+                  "pm.collectionVariables.set(\"rt\", valore);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.6 Riuso del token ruotato dal filtro",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/auth/refresh",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"refreshToken\":\"{{rt_old}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.7 Logout con refresh token nel body",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/auth/logout",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"refreshToken\":\"{{rt}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Richiede la modifica di AuthController.logout che legge anche il body."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "const c = pm.response.headers.filter(h => h.key.toLowerCase() === \"set-cookie\").map(h => h.value);",
+                  "pm.test(\"Cookie cancellati (Max-Age=0)\", () => c.forEach(v => pm.expect(v).to.include(\"Max-Age=0\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.8 Refresh dopo il logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/auth/refresh",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"refreshToken\":\"{{rt}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.9 Access token dopo il logout (ancora valido, per design)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/api/v1/wallet/mywallet",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wallet",
+                "mywallet"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Atteso 200: il JWT e' stateless, resta valido fino a exp (max 15 min). Da spiegare all'orale."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.10 Nuovo login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/auth/login",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"usernameOrEmail\":\"{{u}}\",\"password\":\"Password1!\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set(\"at\", pm.response.json().accessToken); pm.collectionVariables.set(\"rt\", pm.response.json().refreshToken);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 - Wallet",
+      "item": [
+        {
+          "name": "4.1 Wallet iniziale",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/api/v1/wallet/mywallet",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wallet",
+                "mywallet"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Saldo iniziale 0\", () => pm.expect(pm.response.json().balance).to.eql(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.2 Ricarica negativa",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/wallet/recharge",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wallet",
+                "recharge"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"amount\":-5}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.3 Ricarica zero",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/wallet/recharge",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wallet",
+                "recharge"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"amount\":0}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.4 Ricarica senza importo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/wallet/recharge",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wallet",
+                "recharge"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"amount\":null}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.5 Ricarica con stringa",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/wallet/recharge",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wallet",
+                "recharge"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"amount\":\"abc\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Richiede il fix 1.3 (prima 500)."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.6 Ricarica con 3 decimali",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/wallet/recharge",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wallet",
+                "recharge"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"amount\":0.001}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Richiede il fix 1.4."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.7 Ricarica enorme",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/wallet/recharge",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wallet",
+                "recharge"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"amount\":1000000000000}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Richiede il fix 1.4 (prima 409)."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.8 Ricarica valida 100",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/wallet/recharge",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wallet",
+                "recharge"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"amount\":100}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Saldo 100\", () => pm.expect(pm.response.json().balance).to.eql(100));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 - Catalogo e checkout",
+      "item": [
+        {
+          "name": "5.1 Elenco prodotti",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/api/v1/products",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "const p = pm.response.json();",
+                  "pm.test(\"Catalogo non vuoto (hai caricato il SQL?)\", () => pm.expect(p.length).to.be.above(0));",
+                  "const disponibili = p.filter(x => x.stockQuantity > 0);",
+                  "const economico = disponibili.reduce((a, b) => a.price <= b.price ? a : b);",
+                  "const costoso = disponibili.reduce((a, b) => a.price >= b.price ? a : b);",
+                  "const pocoStock = disponibili.reduce((a, b) => a.stockQuantity <= b.stockQuantity ? a : b);",
+                  "pm.collectionVariables.set(\"pCheap\", economico.id); pm.collectionVariables.set(\"pCheapPrice\", economico.price);",
+                  "pm.collectionVariables.set(\"pExp\", costoso.id); pm.collectionVariables.set(\"pExpStock\", costoso.stockQuantity);",
+                  "pm.collectionVariables.set(\"pLow\", pocoStock.id); pm.collectionVariables.set(\"pLowStock\", pocoStock.stockQuantity);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5.2 Checkout con prezzo e totale manomessi",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/shop/checkout",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "shop",
+                "checkout"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"items\":[{\"id\":{{pCheap}},\"quantity\":1,\"price\":0.01}],\"total\":0}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Addebitato il prezzo del DB, non quello inviato\", () =>",
+                  "    pm.expect(pm.response.json().totalSpent).to.eql(Number(pm.collectionVariables.get(\"pCheapPrice\"))));",
+                  "pm.collectionVariables.set(\"balance\", pm.response.json().newBalance);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5.3 Quantita' zero",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/shop/checkout",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "shop",
+                "checkout"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"items\":[{\"id\":{{pCheap}},\"quantity\":0}]}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5.4 Quantita' negativa",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/shop/checkout",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "shop",
+                "checkout"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"items\":[{\"id\":{{pCheap}},\"quantity\":-1}]}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5.5 Quantita' oltre il massimo (101)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/shop/checkout",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "shop",
+                "checkout"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"items\":[{\"id\":{{pCheap}},\"quantity\":101}]}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Richiede @Max(100) su CartItemRequest."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5.6 Carrello vuoto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/shop/checkout",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "shop",
+                "checkout"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"items\":[]}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5.7 Prodotto inesistente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/shop/checkout",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "shop",
+                "checkout"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"items\":[{\"id\":999999,\"quantity\":1}]}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5.8 Stock superato spezzando lo stesso prodotto su due righe",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/shop/checkout",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "shop",
+                "checkout"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"items\":[{\"id\":{{pLow}},\"quantity\":1},{\"id\":{{pLow}},\"quantity\":{{pLowStock}}}]}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5.9 OVERFLOW della quantita'",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/shop/checkout",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "shop",
+                "checkout"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"items\":[{\"id\":{{pLow}},\"quantity\":2147483647},{\"id\":{{pLow}},\"quantity\":2147483647}]}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Prima del fix 1.1 rispondeva 200 e REGALAVA credito."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5.10 Saldo insufficiente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/shop/checkout",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "shop",
+                "checkout"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"items\":[{\"id\":{{pExp}},\"quantity\":1}]}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Saldo insufficiente\", () => pm.expect(pm.response.json().error).to.include(\"Saldo\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5.11 Verifica atomicita': stock invariato",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/api/v1/products",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "const p = pm.response.json();",
+                  "pm.test(\"Stock del prodotto costoso invariato\", () => pm.expect(p.find(x => x.id == pm.collectionVariables.get(\"pExp\")).stockQuantity).to.eql(Number(pm.collectionVariables.get(\"pExpStock\"))));",
+                  "pm.test(\"Stock del prodotto con poco stock invariato (5.8/5.9)\", () => pm.expect(p.find(x => x.id == pm.collectionVariables.get(\"pLow\")).stockQuantity).to.eql(Number(pm.collectionVariables.get(\"pLowStock\"))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5.12 Verifica atomicita': saldo invariato",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/api/v1/wallet/mywallet",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wallet",
+                "mywallet"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Saldo uguale a dopo la 5.2\", () => pm.expect(pm.response.json().balance).to.eql(Number(pm.collectionVariables.get(\"balance\"))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5.13 Storico acquisti",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/api/v1/user/shop/history",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "user",
+                "shop",
+                "history"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "const h = pm.response.json();",
+                  "pm.test(\"Un solo acquisto registrato\", () => pm.expect(h.length).to.eql(1));",
+                  "pm.test(\"Quantita' positiva\", () => pm.expect(h[0].quantity).to.eql(1));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 - Abbonamento Insider",
+      "item": [
+        {
+          "name": "6.1 Elenco piani",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/api/v1/plans",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "plans"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "const p = pm.response.json();",
+                  "pm.test(\"Almeno 2 piani (hai caricato il SQL dei piani?)\", () => pm.expect(p.length).to.be.at.least(2));",
+                  "pm.collectionVariables.set(\"plan1\", p[0].id); pm.collectionVariables.set(\"plan1Disc\", p[0].discountPercentage);",
+                  "pm.collectionVariables.set(\"plan2\", p[1].id); pm.collectionVariables.set(\"plan2Disc\", p[1].discountPercentage);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6.2 Piano inesistente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/membership/buy",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "membership",
+                "buy"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"planId\":999999}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6.3 Piano senza id",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/membership/buy",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "membership",
+                "buy"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6.4 Utente 2 (saldo 0) compra un piano",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/membership/buy",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "membership",
+                "buy"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"planId\":{{plan1}}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at2}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Saldo insufficiente\", () => pm.expect(pm.response.json().error).to.include(\"Saldo\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6.5 Utente 2: preview senza sconto (nessuna membership creata)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/shop/cart/preview",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "shop",
+                "cart",
+                "preview"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"items\":[{\"id\":{{pCheap}},\"quantity\":1}]}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at2}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Sconto 0\", () => pm.expect(pm.response.json().discountPercentage).to.eql(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6.6 Ricarica per gli abbonamenti",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/wallet/recharge",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wallet",
+                "recharge"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"amount\":200}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6.7 Acquisto piano 1",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/membership/buy",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "membership",
+                "buy"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"planId\":{{plan1}}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6.8 Preview carrello con sconto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/shop/cart/preview",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "shop",
+                "cart",
+                "preview"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"items\":[{\"id\":{{pCheap}},\"quantity\":1}]}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json(); const d = Number(pm.collectionVariables.get(\"plan1Disc\"));",
+                  "pm.test(\"Sconto del piano 1 applicato\", () => pm.expect(b.discountPercentage).to.eql(d));",
+                  "const atteso = Math.round(Number(pm.collectionVariables.get(\"pCheapPrice\")) * (100 - d)) / 100;",
+                  "pm.test(\"Totale scontato corretto\", () => pm.expect(b.discountedTotal).to.be.closeTo(atteso, 0.011));",
+                  "pm.collectionVariables.set(\"expectedDiscounted\", b.discountedTotal);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6.9 Checkout scontato",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/shop/checkout",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "shop",
+                "checkout"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"items\":[{\"id\":{{pCheap}},\"quantity\":1}]}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Addebitato il totale scontato\", () => pm.expect(pm.response.json().totalSpent).to.eql(Number(pm.collectionVariables.get(\"expectedDiscounted\"))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6.10 Acquisto piano 2 (sostituisce il piano 1)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/membership/buy",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "membership",
+                "buy"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"planId\":{{plan2}}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6.11 Preview con lo sconto del piano 2",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/shop/cart/preview",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "shop",
+                "cart",
+                "preview"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"items\":[{\"id\":{{pCheap}},\"quantity\":1}]}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Vale solo il piano 2\", () => pm.expect(pm.response.json().discountPercentage).to.eql(Number(pm.collectionVariables.get(\"plan2Disc\"))));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07 - Controllo accessi admin",
+      "item": [
+        {
+          "name": "7.1 USER crea un prodotto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/admin/products",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "products"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Pennelli professionali set 12pz\",\"description\":\"Set per acrilico e olio\",\"price\":18.90,\"stockQuantity\":15,\"category\":\"Materiali\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 403\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7.2 Anonimo crea un prodotto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/admin/products",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "products"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Pennelli professionali set 12pz\",\"description\":\"Set per acrilico e olio\",\"price\":18.90,\"stockQuantity\":15,\"category\":\"Materiali\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "401 dopo il fix dell'entry point (prima 403)."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "08 - API esterna e rate limiting",
+      "item": [
+        {
+          "name": "8.1 Opera in evidenza (+5 richieste automatiche)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/api/v1/artwork/featured",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "artwork",
+                "featured"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Esegue in totale 6 richieste in pochi secondi: le prime 5 passano, la sesta deve essere 429."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const a = pm.response.json();",
+                  "    pm.test(\"Campi opera presenti\", () => { pm.expect(a).to.have.property(\"title\"); pm.expect(a.imageUrl).to.match(/^\\/api\\/v1\\/artwork\\/image\\//); });",
+                  "    pm.collectionVariables.set(\"imageUrl\", a.imageUrl);",
+                  "}",
+                  "const base = pm.collectionVariables.get(\"base\"), tok = pm.collectionVariables.get(\"at\");",
+                  "const stati = [pm.response.code];",
+                  "function chiama(i) {",
+                  "    if (i > 6) {",
+                  "        pm.test(\"Prime 5 richieste non limitate: \" + stati.slice(0,5).join(\",\"), () => stati.slice(0,5).forEach(s => pm.expect(s).to.not.eql(429)));",
+                  "        pm.test(\"Sesta richiesta = 429 (stati: \" + stati.join(\",\") + \")\", () => pm.expect(stati[5]).to.eql(429));",
+                  "        return;",
+                  "    }",
+                  "    pm.sendRequest({ url: base + \"/api/v1/artwork/featured\", method: \"GET\", header: { Authorization: \"Bearer \" + tok } }, (err, res) => { stati.push(res.code); chiama(i + 1); });",
+                  "}",
+                  "chiama(2);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "8.2 Stesso endpoint con l'utente 2 (limite separato)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/api/v1/artwork/featured",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "artwork",
+                "featured"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at2}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Utente 2 non bloccato dal limite dell'utente 1\", () => pm.expect(pm.response.code).to.not.eql(429));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "8.3 Proxy immagine opera",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/api/v1/artwork/image/{{imageId}}",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "artwork",
+                "image",
+                "{{imageId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = pm.collectionVariables.get(\"imageUrl\") || \"\"; pm.variables.set(\"imageId\", u.split(\"/\").pop() || \"2d484387-2509-5e8e-2c43-22f9981972eb\");"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Content-Type image/jpeg\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"image/jpeg\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "8.4 Proxy immagine con id non valido",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/api/v1/artwork/image/abc",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "artwork",
+                "image",
+                "abc"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "8.5 Proxy immagine: rate limit (+5 richieste automatiche)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/api/v1/artwork/image/{{imageId}}",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "artwork",
+                "image",
+                "{{imageId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at2}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Richiede il limiter aggiunto su artworkImage. Usa l'utente 2."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = pm.collectionVariables.get(\"imageUrl\") || \"\"; pm.variables.set(\"imageId\", u.split(\"/\").pop() || \"2d484387-2509-5e8e-2c43-22f9981972eb\");"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const img = \"/api/v1/artwork/image/\" + pm.variables.get(\"imageId\");",
+                  "const base = pm.collectionVariables.get(\"base\"), tok = pm.collectionVariables.get(\"at2\");",
+                  "const stati = [pm.response.code];",
+                  "function chiama(i) {",
+                  "    if (i > 6) {",
+                  "        pm.test(\"Prime 5 richieste non limitate: \" + stati.slice(0,5).join(\",\"), () => stati.slice(0,5).forEach(s => pm.expect(s).to.not.eql(429)));",
+                  "        pm.test(\"Sesta richiesta = 429 (stati: \" + stati.join(\",\") + \")\", () => pm.expect(stati[5]).to.eql(429));",
+                  "        return;",
+                  "    }",
+                  "    pm.sendRequest({ url: base + img, method: \"GET\", header: { Authorization: \"Bearer \" + tok } }, (err, res) => { stati.push(res.code); chiama(i + 1); });",
+                  "}",
+                  "chiama(2);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "09 - Errori, header e infrastruttura",
+      "item": [
+        {
+          "name": "9.1 Path inesistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/api/v1/nonesiste",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "nonesiste"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Nessuno stack trace\", () => pm.expect(pm.response.text()).to.not.include(\"Exception\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "9.2 Metodo sbagliato",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/api/v1/shop/checkout",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "shop",
+                "checkout"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 405\", () => pm.response.to.have.status(405));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "9.3 Content-Type sbagliato",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/wallet/recharge",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wallet",
+                "recharge"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 415\", () => pm.response.to.have.status(415));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "9.4 Actuator health pubblico",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/actuator/health",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "9.5 Actuator info senza token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/actuator/info",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "actuator",
+                "info"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "9.6 Header di sicurezza su una pagina",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/home/profile",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "home",
+                "profile"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "const h = n => pm.response.headers.get(n) || \"\";",
+                  "pm.test(\"HSTS\", () => pm.expect(h(\"Strict-Transport-Security\")).to.include(\"max-age\"));",
+                  "pm.test(\"X-Frame-Options DENY\", () => pm.expect(h(\"X-Frame-Options\")).to.eql(\"DENY\"));",
+                  "pm.test(\"X-Content-Type-Options nosniff\", () => pm.expect(h(\"X-Content-Type-Options\")).to.eql(\"nosniff\"));",
+                  "pm.test(\"Cache-Control no-store\", () => pm.expect(h(\"Cache-Control\")).to.include(\"no-store\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "10 - Manuali (prima esegui l'SQL indicato nella descrizione)",
+      "item": [
+        {
+          "name": "10.1 [SQL: promuovi ad ADMIN] crea prodotto con lo STESSO token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/admin/products",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "products"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Pennelli professionali set 12pz\",\"description\":\"Set per acrilico e olio\",\"price\":18.90,\"stockQuantity\":15,\"category\":\"Materiali\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Prima esegui:\nUPDATE users SET role = 'ADMIN' WHERE id = (SELECT id FROM users WHERE username LIKE 'mario%' ORDER BY created_at DESC LIMIT 1);\nNon rifare il login dopo l'UPDATE: il ruolo viene letto dal DB, non dal JWT. Se sono passati piu' di 15 minuti dall'ultimo login, reinvia prima la 1.10."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10.2 [ADMIN] prodotto con dati non validi",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/admin/products",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "products"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"\",\"price\":0,\"stockQuantity\":-1,\"category\":\"\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));",
+                  "const b = pm.response.json(); pm.test(\"Errori su name, price, stockQuantity, category\", () => [\"name\",\"price\",\"stockQuantity\",\"category\"].forEach(k => pm.expect(b).to.have.property(k)));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10.3 [ADMIN] descrizione di 300 caratteri",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/admin/products",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "products"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Lungo\",\"description\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"price\":5,\"stockQuantity\":1,\"category\":\"Test\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "L'utente deve essere ADMIN (vedi 10.1)."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Errore di validazione sulla descrizione\", () => pm.expect(pm.response.json()).to.have.property(\"description\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10.4 [ADMIN] prodotto XSS",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/admin/products",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "products"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"<img src=x onerror=alert(1)>\",\"description\":\"<script>alert(2)</script>\",\"price\":5.00,\"stockQuantity\":3,\"category\":\"Test\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Poi apri https://localhost:8443/home/shop nel browser: il testo deve comparire letterale, nessun alert."
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10.5 [SQL: riporta a USER] crea prodotto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/admin/products",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "products"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Pennelli professionali set 12pz\",\"description\":\"Set per acrilico e olio\",\"price\":18.90,\"stockQuantity\":15,\"category\":\"Materiali\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Prima esegui:\nUPDATE users SET role = 'USER' WHERE id = (SELECT id FROM users WHERE username LIKE 'mario%' ORDER BY created_at DESC LIMIT 1);"
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 403\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10.6 [SQL: fai scadere l'abbonamento] preview",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/shop/cart/preview",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "shop",
+                "cart",
+                "preview"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"items\":[{\"id\":{{pCheap}},\"quantity\":1}]}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{at}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Prima esegui:\nUPDATE club_membership SET end_date = now() - interval '1 day' WHERE user_id = (SELECT id FROM users WHERE username LIKE 'mario%' ORDER BY created_at DESC LIMIT 1);"
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Nessuno sconto con abbonamento scaduto\", () => pm.expect(pm.response.json().discountPercentage).to.eql(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10.7 [SQL: fai scadere il refresh token] refresh",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/v1/auth/refresh",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"refreshToken\":\"{{rt}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Prima reinvia la 1.10 (login), poi esegui:\nUPDATE refresh_token SET expiry_date = now() - interval '1 day' WHERE id = (SELECT max(id) FROM refresh_token WHERE user_id = (SELECT id FROM users WHERE username LIKE 'mario%' ORDER BY created_at DESC LIMIT 1));"
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true,
+            "strictSSL": false
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Refresh token scaduto\", () => pm.expect(pm.response.json().error).to.include(\"scaduto\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

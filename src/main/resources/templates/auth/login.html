@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Accedi — ArteVia</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header class="site-header">
+        <a href="/" style="color:inherit;text-decoration:none;"><span class="brand">ArteVia</span></a>
+        <nav><a href="/auth/register">Registrati</a></nav>
+    </header>
+
+    <div class="container-narrow" style="padding-top:80px;">
+        <div class="panel">
+            <span class="eyebrow">Bentornato</span>
+            <h2>Accedi</h2>
+
+            <form id="loginForm" novalidate>
+                <div class="field">
+                    <label for="usernameOrEmail">Username o email</label>
+                    <input type="text" id="usernameOrEmail" required>
+                    <div class="field-error" id="err-uoe"></div>
+                </div>
+                <div class="field">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required>
+                    <div class="field-error" id="err-password"></div>
+                </div>
+                <button type="submit" style="width:100%;">Accedi</button>
+                <div id="serverMsg" role="alert"></div>
+            </form>
+
+            <p style="margin-top:18px;font-size:0.9rem;">Non hai un account? <a href="/auth/register">Registrati</a></p>
+        </div>
+    </div>
+
+    <script>
+        
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const serverMsg = document.getElementById('serverMsg');
+            serverMsg.innerHTML = '';
+
+            const usernameOrEmail = document.getElementById('usernameOrEmail').value.trim();
+            const password = document.getElementById('password').value;
+
+            let valid = true;
+            document.getElementById('err-uoe').textContent = usernameOrEmail ? '' : 'Campo obbligatorio';
+            if (!usernameOrEmail) valid = false;
+            document.getElementById('err-password').textContent = password ? '' : 'Campo obbligatorio';
+            if (!password) valid = false;
+            if (!valid) return;
+
+            try {
+                const res = await fetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ usernameOrEmail, password })
+                });
+
+                if (res.ok) {
+                    window.location.href = '/home/profile';
+                } else {
+                    const data = await res.json();
+                    const message = data.error || Object.values(data).join(' — ') || 'Credenziali non valide';
+                    serverMsg.innerHTML = `<div class="banner error">${escapeHtml(message)}</div>`;
+                }
+            } catch (err) {
+                serverMsg.innerHTML = '<div class="banner error">Impossibile contattare il server. Riprova.</div>';
+            }
+        });
+    </script>
+</body>
+</html>

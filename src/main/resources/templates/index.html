@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ArteVia — Opere e materiali per artisti</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header class="site-header">
+        <span class="brand">ArteVia</span>
+        <nav>
+            <a href="/auth/login">Accedi</a>
+            <a href="/auth/register">Registrati</a>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <div class="hero-frame">
+            <span class="eyebrow">Galleria &amp; atelier online</span>
+            <h1>Opere, stampe e materiali scelti con lo stesso occhio di un curatore.</h1>
+            <p>Ogni pezzo del catalogo ArteVia è selezionato per chi dipinge, disegna o colleziona con cura.</p>
+            <a class="btn cta" href="/auth/register">Entra in galleria</a>
+        </div>
+    </section>
+
+    <section class="container showcase">
+        <div class="showcase-grid">
+            <div class="art-card">
+                <div class="frame"><img src="/images/il-bacio.jpg" alt="Stampe" loading="lazy"></div>
+                <h4>Edizioni fine-art</h4>
+                <p style="font-size:0.85rem;color:var(--ink-soft);">Riproduzioni museali su carta cotone, numerate.</p>
+            </div>
+            <div class="art-card">
+                <div class="frame"><img src="/images/notte-stellata.jpg" alt="Dipinti" loading="lazy"></div>
+                <h4>Opere originali</h4>
+                <p style="font-size:0.85rem;color:var(--ink-soft);">Pezzi unici selezionati da artisti indipendenti.</p>
+            </div>
+            <div class="art-card">
+                <div class="frame"><img src="/images/tavolozza.jpg" alt="Materiali" loading="lazy"></div>
+                <h4>Strumenti per artisti</h4>
+                <p style="font-size:0.85rem;color:var(--ink-soft);">Colori, carta e cavalletti per chi crea.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="container about-strip">
+        <div class="about-grid">
+            <div>
+                <span class="eyebrow">Selezione curata</span>
+                <p>Ogni opera passa al vaglio della redazione prima di entrare in catalogo.</p>
+            </div>
+            <div>
+                <span class="eyebrow">Pagamenti protetti</span>
+                <p>Wallet integrato e transazioni verificate ad ogni acquisto.</p>
+            </div>
+            <div>
+                <span class="eyebrow">Community di artisti</span>
+                <p>Stampe e materiali scelti insieme ad artisti indipendenti.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer class="site-footer">
+        <p>&copy; 2026 ArteVia - Progetto universitario, Sicurezza delle Architetture Orientate ai Servizi.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,322 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600&family=Cormorant+Garamond:ital,wght@1,400;1,500;1,600&display=swap');
+
+:root {
+    --canvas: #F3ECDD;
+    --paper: #FBF7EE;
+    --ink: #2A211A;
+    --ink-soft: #6B5A49;
+    --ultramarine: #6E2A34;
+    --ultramarine-dark: #531F27;
+    --sienna: #A6503A;
+    --ocra: #B8912F;
+    --line: #E4D9C2;
+    --radius: 3px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: var(--canvas);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+h1, h2, h3 {
+    font-family: 'Playfair Display', serif;
+    font-weight: 600;
+    margin: 0 0 0.4em;
+    letter-spacing: -0.01em;
+}
+
+.eyebrow {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 0.92rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+}
+
+a { color: var(--ultramarine); }
+
+/* Header */
+header.site-header {
+    background: var(--ink);
+    color: var(--canvas);
+    padding: 22px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--ocra);
+}
+header.site-header .brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    letter-spacing: 0.02em;
+}
+header.site-header nav a {
+    color: var(--canvas);
+    text-decoration: none;
+    margin-left: 28px;
+    font-size: 0.92rem;
+    border-bottom: 1px solid transparent;
+    padding-bottom: 2px;
+    transition: border-color 0.2s;
+}
+header.site-header nav a:hover { border-color: var(--ocra); }
+
+/* Layout */
+.container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+.container-narrow { max-width: 460px; margin: 0 auto; padding: 0 24px; }
+
+/* Panels ("wall label" style card) */
+.panel {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 28px;
+    margin-bottom: 24px;
+}
+
+/* Forms */
+.field { margin-bottom: 18px; }
+.field label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: var(--ink-soft);
+}
+.field input {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: #fff;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    color: var(--ink);
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.field input:focus {
+    outline: none;
+    border-color: var(--ultramarine);
+    box-shadow: 0 0 0 3px rgba(110,42,52,0.15);
+}
+.field input.invalid { border-color: var(--sienna); }
+.field-error {
+    font-size: 0.8rem;
+    color: var(--sienna);
+    margin-top: 5px;
+    min-height: 1.1em;
+}
+.field-hint {
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    margin-top: 5px;
+}
+
+button, .btn {
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    font-size: 0.92rem;
+    padding: 12px 22px;
+    border: none;
+    border-radius: var(--radius);
+    background: var(--ultramarine);
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+}
+button:hover { background: var(--ultramarine-dark); }
+button:active { transform: scale(0.98); }
+button:focus-visible { outline: 2px solid var(--ocra); outline-offset: 2px; }
+button:disabled { background: var(--line); cursor: not-allowed; }
+
+.btn-outline {
+    background: transparent;
+    border: 1px solid var(--ink);
+    color: var(--ink);
+}
+.btn-outline:hover { background: var(--ink); color: var(--canvas); }
+
+/* Feedback banners */
+.banner {
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: 0.88rem;
+    margin-top: 14px;
+}
+.banner.success { background: #E7EFE3; color: #3D5C34; border: 1px solid #B9D1AE; }
+.banner.error { background: #F4E3DF; color: var(--sienna); border: 1px solid #E3BBAE; }
+
+/* Product / artwork card ("museum label") */
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+}
+.art-card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.art-card:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(42,33,26,0.1); }
+.art-card .frame {
+    aspect-ratio: 4/3;
+    background: linear-gradient(135deg, #EADFC4, #DCCFAE);
+    border-radius: 2px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-soft);
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 0.85rem;
+}
+.art-card h4 { font-size: 1.05rem; margin-bottom: 2px; font-family: 'Playfair Display', serif; }
+.art-card .price {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 1.1rem;
+    color: var(--ultramarine);
+}
+.art-card .stock { font-size: 0.78rem; color: var(--ink-soft); margin: 4px 0 10px; }
+
+/* Plan card */
+.plan-card {
+    border: 1px solid var(--line);
+    background: var(--paper);
+    padding: 18px;
+    border-radius: var(--radius);
+    flex: 1;
+    min-width: 190px;
+}
+.plan-card .discount-badge {
+    display: inline-block;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 0.85rem;
+    color: var(--ocra);
+    border: 1px solid var(--ocra);
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-top: 6px;
+}
+
+/* Hero (index only) */
+.hero {
+    position: relative;
+    text-align: center;
+    padding: 140px 24px 100px;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 18% 22%, rgba(110,42,52,0.06), transparent 42%),
+        radial-gradient(circle at 82% 75%, rgba(184,145,47,0.08), transparent 46%),
+        var(--canvas);
+}
+.hero::before {
+    content: 'A';
+    position: absolute;
+    top: -0.4em;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Playfair Display', serif;
+    font-size: 42rem;
+    font-weight: 600;
+    color: var(--ink);
+    opacity: 0.035;
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+}
+.hero-frame {
+    position: relative;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 56px 44px;
+    border: 1px solid var(--ink);
+}
+.hero-frame::before,
+.hero-frame::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--ocra);
+}
+.hero-frame::before { top: -10px; left: -10px; border-right: none; border-bottom: none; }
+.hero-frame::after { bottom: -10px; right: -10px; border-left: none; border-top: none; }
+
+.hero .eyebrow { display: block; margin-bottom: 18px; }
+.hero h1 { font-size: 3.2rem; margin: 0 auto 18px; }
+.hero p { color: var(--ink-soft); max-width: 480px; margin: 0 auto; font-size: 1.05rem; }
+.hero .cta { display: inline-block; margin-top: 34px; text-decoration: none; }
+
+/* Vetrina sotto l'hero */
+.showcase { padding: 10px 24px 90px; }
+.showcase-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 24px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+}
+
+@media (max-width: 600px) {
+    header.site-header { padding: 16px 20px; flex-direction: column; gap: 10px; }
+    .hero { padding: 70px 20px 60px; }
+    .hero h1 { font-size: 2.2rem; }
+}
+/* Immagini reali nelle card */
+.art-card .frame {
+    overflow: hidden;
+}
+.art-card .frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* Sezione "perché ArteVia" */
+.about-strip { padding: 40px 24px 80px; }
+.about-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 32px;
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+}
+.about-grid p { color: var(--ink-soft); font-size: 0.92rem; margin-top: 8px; }
+
+.art-card .frame {
+    overflow: hidden;
+}
+.art-card .frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* Footer */
+.site-footer {
+    background: var(--ink);
+    color: var(--ink-soft);
+    padding: 24px 48px;
+    text-align: center;
+    font-size: 0.8rem;
+}

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Negozio — ArteVia</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header class="site-header">
+        <a href="/" style="color:inherit;text-decoration:none;"><span class="brand">ArteVia</span></a>
+        <nav>
+            <a href="/home/profile">Profilo</a>
+            <a href="/home/shop">Negozio</a>
+            <a href="#" onclick="logout(); return false;">Esci</a>
+        </nav>
+    </header>
+
+    <div class="container" style="padding-top:36px;padding-bottom:60px;">
+        <span class="eyebrow">Catalogo</span>
+        <h2 style="margin-bottom:24px;">Opere e materiali</h2>
+
+        <div class="gallery-grid" id="productGrid"></div>
+
+        <div class="panel" style="margin-top:36px;">
+            <span class="eyebrow">Il tuo carrello</span>
+            <div id="cartItems" style="margin-top:12px;"></div>
+            <p style="font-family:'JetBrains Mono',monospace;margin-top:10px;">Totale: <strong id="cartTotal">0.00</strong> €</p>
+            <p id="cartDiscount" style="font-family:'JetBrains Mono',monospace;color:var(--ultramarine);"></p>
+            <button id="checkoutBtn" onclick="checkout()">Completa acquisto</button>
+            <div id="checkoutMsg"></div>
+        </div>
+    </div>
+
+    <script>
+        let products = [];
+        let cart = {};
+
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+            const productImages = {
+            'Stampa Van Gogh - Notte Stellata': '/images/notte-stellata.jpg',
+            'Tela dipinta a mano - Paesaggio astratto': '/images/paesaggio-astratto.jpg',
+            'Set 24 matite colorate professionali': '/images/matite.jpg',
+            'Tavolozza acquerelli 36 colori': '/images/tavolozza.jpg',
+            'Cavalletto da tavolo in legno': '/images/cavalletto.jpg',
+            'Stampa Klimt - Il Bacio': '/images/il-bacio.jpg',
+            'Blocco carta pressata a caldo A3': '/images/carta-acquerello.jpg',
+            'Scultura in ceramica - Busto astratto': '/images/busto.jpg'
+        };
+        const fallbackImage = '/images/tavolozza.jpg';
+        
+        async function loadProducts() {
+            const res = await fetch('/api/v1/products');
+            products = await res.json();
+            document.getElementById('productGrid').innerHTML = products.map(p => `
+                <div class="art-card">
+                    <div class="frame"><img src="${productImages[p.name] || fallbackImage}" alt="${escapeHtml(p.name)}" loading="lazy"></div>
+                    <h4>${escapeHtml(p.name)}</h4>
+                    <p style="font-size:0.85rem;color:var(--ink-soft);margin:2px 0 8px;">${escapeHtml(p.description) || ''}</p>
+                    <p class="price">${p.price} €</p>
+                    <p class="stock">${p.stockQuantity > 0 ? p.stockQuantity + ' disponibili' : 'Esaurito'}</p>
+                    <button style="width:100%;" onclick="addToCart(${p.id})" ${p.stockQuantity === 0 ? 'disabled' : ''}>
+                        ${p.stockQuantity === 0 ? 'Non disponibile' : 'Aggiungi al carrello'}
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function addToCart(id) {
+            const product = products.find(p => p.id === id);
+            const currentQty = cart[id] || 0;
+            if (currentQty + 1 > product.stockQuantity) {
+                alert('Quantità richiesta superiore allo stock disponibile');
+                return;
+            }
+            cart[id] = currentQty + 1;
+            renderCart();
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cartItems');
+            let total = 0;
+            const entries = Object.entries(cart);
+            container.innerHTML = entries.length ? entries.map(([id, qty]) => {
+                const p = products.find(x => x.id == id);
+                const lineTotal = p.price * qty;
+                total += lineTotal;
+                return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line);">
+                    <span>${escapeHtml(p.name)} × ${qty}</span>
+                    <span style="font-family:'JetBrains Mono',monospace;">${lineTotal.toFixed(2)} €</span>
+                </div>`;
+            }).join('') : '<p style="color:var(--ink-soft);">Carrello vuoto</p>';
+            document.getElementById('cartTotal').textContent = total.toFixed(2);
+            updatePreview();
+        }
+
+        async function updatePreview() {
+            const box = document.getElementById('cartDiscount');
+            const items = Object.entries(cart).map(([id, qty]) => ({ id: parseInt(id), quantity: qty }));
+            if (items.length === 0) {
+                box.textContent = '';
+                return;
+            }
+            const res = await fetch('/api/v1/shop/cart/preview', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ items })
+            });
+            if (!res.ok) {
+                box.textContent = '';
+                return;
+            }
+            const preview = await res.json();
+            box.textContent = preview.discountPercentage > 0
+                ? `Sconto Insider -${preview.discountPercentage}%: totale da pagare ${Number(preview.discountedTotal).toFixed(2)} €`
+                : '';
+        }
+
+        async function logout() {
+            await fetch('/api/v1/auth/logout', { method: 'POST' });
+            window.location.href = '/auth/login';
+        }
+
+        async function checkout() {
+            const msg = document.getElementById('checkoutMsg');
+            const items = Object.entries(cart).map(([id, qty]) => ({ id: parseInt(id), quantity: qty }));
+            if (items.length === 0) {
+                msg.innerHTML = '<div class="banner error">Il carrello è vuoto</div>';
+                return;
+            }
+
+            const res = await fetch('/api/v1/shop/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ items })
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                msg.innerHTML = `<div class="banner success">Acquisto completato — speso ${data.totalSpent.toFixed(2)} €, nuovo saldo ${data.newBalance.toFixed(2)} €</div>`;
+                cart = {};
+                renderCart();
+                loadProducts();
+            } else {
+                msg.innerHTML = `<div class="banner error">${escapeHtml(data.error) || 'Checkout non riuscito'}</div>`;
+            }
+        }
+
+        loadProducts();
+    </script>
+</body>
+</html>

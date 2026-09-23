@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Il tuo profilo — ArteVia</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header class="site-header">
+        <a href="/" style="color:inherit;text-decoration:none;"><span class="brand">ArteVia</span></a>
+        <nav>
+            <a href="/home/profile">Profilo</a>
+            <a href="/home/shop">Negozio</a>
+            <a href="#" onclick="logout(); return false;">Esci</a>
+        </nav>
+    </header>
+
+    <div class="container" style="padding-top:36px;padding-bottom:60px;">
+        <h2 th:text="'Benvenuto, ' + ${username} + '.'">Benvenuto</h2>
+
+        <div class="panel">
+            <span class="eyebrow">Wallet</span>
+            <h3 style="margin-top:6px;">Saldo: <span id="balance" style="color:var(--ultramarine);">--</span> €</h3>
+            <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
+                <input type="number" id="rechargeAmount" placeholder="Importo da ricaricare" style="max-width:220px;padding:11px 12px;border:1px solid var(--line);border-radius:3px;">
+                <button onclick="recharge()">Ricarica</button>
+            </div>
+            <div id="walletMsg"></div>
+        </div>
+
+        <div class="panel">
+            <span class="eyebrow">Abbonamento Insider</span>
+            <h3 style="margin-top:6px;">Piani disponibili</h3>
+            <div id="plansList" style="display:flex;gap:14px;flex-wrap:wrap;margin-top:14px;"></div>
+            <div id="membershipMsg"></div>
+        </div>
+
+        <div class="panel">
+            <span class="eyebrow">Oggi in galleria</span>
+            <h3 style="margin-top:6px;">Opera in evidenza</h3>
+            <div id="artworkBox" style="margin-top:14px;">Caricamento…</div>
+        </div>
+
+        <div class="panel">
+            <span class="eyebrow">Storico</span>
+            <h3 style="margin-top:6px;">I tuoi acquisti</h3>
+            <ul id="historyList" style="margin-top:14px;padding-left:18px;"></ul>
+        </div>
+    </div>
+
+    <script>
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        async function loadWallet() {
+            const res = await fetch('/api/v1/wallet/mywallet');
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById('balance').textContent = data.balance.toFixed(2);
+            }
+        }
+
+        async function recharge() {
+            const input = document.getElementById('rechargeAmount');
+            const amount = parseFloat(input.value);
+            const msg = document.getElementById('walletMsg');
+            if (!amount || amount <= 0) {
+                msg.innerHTML = '<div class="banner error">Inserisci un importo valido</div>';
+                return;
+            }
+            const res = await fetch('/api/v1/wallet/recharge', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount })
+            });
+            if (res.ok) {
+                msg.innerHTML = '<div class="banner success">Ricarica completata</div>';
+                input.value = '';
+                loadWallet();
+            } else {
+                const data = await res.json();
+                msg.innerHTML = `<div class="banner error">${escapeHtml(data.error) || 'Ricarica non riuscita'}</div>`;
+            }
+        }
+
+        async function loadPlans() {
+            const res = await fetch('/api/v1/plans');
+            const plans = await res.json();
+            document.getElementById('plansList').innerHTML = plans.map(p => `
+                <div class="plan-card">
+                    <div class="eyebrow">Piano</div>
+                    <h4 style="margin:4px 0;">${escapeHtml(p.name)}</h4>
+                    <p style="margin:4px 0;font-family:'JetBrains Mono',monospace;">${p.price} € / ${p.durationDays}gg</p>
+                    <span class="discount-badge">-${p.discountPercentage}% sugli acquisti</span><br>
+                    <button style="margin-top:12px;width:100%;" onclick="buyPlan(${p.id})">Sottoscrivi</button>
+                </div>
+            `).join('');
+        }
+
+        async function buyPlan(planId) {
+            const msg = document.getElementById('membershipMsg');
+            const res = await fetch('/api/v1/membership/buy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ planId })
+            });
+            if (res.ok) {
+                msg.innerHTML = '<div class="banner success">Abbonamento attivato</div>';
+                loadWallet();
+            } else {
+                const data = await res.json();
+                msg.innerHTML = `<div class="banner error">${escapeHtml(data.error) || 'Operazione non riuscita'}</div>`;
+            }
+        }
+
+        async function loadArtwork() {
+            const res = await fetch('/api/v1/artwork/featured');
+            const box = document.getElementById('artworkBox');
+            if (res.ok) {
+                const a = await res.json();
+                const safeTitle = escapeHtml(a.title);
+                const safeArtist = escapeHtml(a.artist);
+                const safeDate = escapeHtml(a.date);
+                box.innerHTML = `
+                    <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;">
+                        ${a.imageUrl ? `<img src="${escapeHtml(a.imageUrl)}" alt="${safeTitle}" style="max-width:280px;border-radius:3px;border:1px solid var(--line);">` : ''}
+                        <div>
+                            <h4 style="margin-bottom:4px;">${safeTitle}</h4>
+                            <p class="eyebrow" style="margin:0;">${safeArtist || ''} — ${safeDate || ''}</p>
+                        </div>
+                    </div>`;
+            } else if (res.status === 429) {
+                box.innerHTML = '<p style="color:var(--ink-soft);">Limite di richieste raggiunto, riprova tra un minuto.</p>';
+            } else {
+                box.innerHTML = '<p style="color:var(--ink-soft);">Opera non disponibile al momento.</p>';
+            }
+        }
+
+        async function logout() {
+            await fetch('/api/v1/auth/logout', { method: 'POST' });
+            window.location.href = '/auth/login';
+        }
+
+        async function loadHistory() {
+            const res = await fetch('/api/v1/user/shop/history');
+            const list = document.getElementById('historyList');
+            if (res.ok) {
+                const items = await res.json();
+                list.innerHTML = items.map(i =>
+                    `<li>${escapeHtml(i.productName)} × ${i.quantity} — <span style="font-family:'JetBrains Mono',monospace;">${i.total.toFixed(2)} €</span> <span style="color:var(--ink-soft);font-size:0.85rem;">(${new Date(i.purchasedAt).toLocaleDateString()})</span></li>`
+                ).join('') || '<li style="color:var(--ink-soft);">Nessun acquisto ancora</li>';
+            }
+        }
+
+        loadWallet();
+        loadPlans();
+        loadArtwork();
+        loadHistory();
+    </script>
+</body>
+</html>

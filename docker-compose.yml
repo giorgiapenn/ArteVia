@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: artevia-db
+    environment:
+      POSTGRES_DB: ARTEVIA
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - artevia_pgdata:/var/lib/postgresql/data
+
+volumes:
+  artevia_pgdata:
