@@ -113,32 +113,30 @@ public class ShopService {
         return productsById;
     }
 
+    private BigDecimal discountedUnitPrice(Product product, int discountPercentage) {
+        var discountFactor = BigDecimal.valueOf(100 - discountPercentage).divide(BigDecimal.valueOf(100));
+        return product.getPrice().multiply(discountFactor).setScale(2, RoundingMode.HALF_UP);
+    }
+
     private BigDecimal computeDiscountedTotal(List<CartItem> items, Map<Long, Product> productsById,
                                                int discountPercentage) {
         var total = BigDecimal.ZERO;
         for (var item : items) {
-            var product = productsById.get(item.productId());
-            var lineTotal = product.getPrice().multiply(BigDecimal.valueOf(item.quantity()));
-            total = total.add(lineTotal);
-        }
-
-        if (discountPercentage > 0) {
-            var discountFactor = BigDecimal.valueOf(100 - discountPercentage).divide(BigDecimal.valueOf(100));
-            total = total.multiply(discountFactor).setScale(2, RoundingMode.HALF_UP);
+            var unitPrice = discountedUnitPrice(productsById.get(item.productId()), discountPercentage);
+            total = total.add(unitPrice.multiply(BigDecimal.valueOf(item.quantity())));
         }
         return total;
     }
 
     private void applyPurchase(User user, List<CartItem> items, Map<Long, Product> productsById,
                                 Wallet wallet, BigDecimal total, int discountPercentage) {
-        var discountFactor = BigDecimal.valueOf(100 - discountPercentage).divide(BigDecimal.valueOf(100));
 
         for (var item : items) {
             var product = productsById.get(item.productId());
             product.setStockQuantity(product.getStockQuantity() - item.quantity());
             productRepository.save(product);
 
-            var paidUnitPrice = product.getPrice().multiply(discountFactor).setScale(2, RoundingMode.HALF_UP);
+            var paidUnitPrice = discountedUnitPrice(product, discountPercentage);
 
             var purchase = PurchasedProduct.builder()
                     .user(user)

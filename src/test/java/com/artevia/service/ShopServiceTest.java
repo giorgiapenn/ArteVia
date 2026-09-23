@@ -139,4 +139,25 @@ class ShopServiceTest {
 
         verifyNoInteractions(walletRepository, productRepository, purchasedProductRepository);
     }
+
+    @Test
+    void con_lo_sconto_il_totale_coincide_con_la_somma_dei_prezzi_unitari_registrati() {
+        Wallet wallet = Wallet.builder().user(user).balance(new BigDecimal("200")).build();
+        Product product = Product.builder().id(1L).name("Stampa").price(new BigDecimal("39.90")).stockQuantity(10).build();
+        ClubPlan plan = ClubPlan.builder().discountPercentage(5).build();
+        ClubMembership membership = ClubMembership.builder().plan(plan).active(true)
+                .endDate(java.time.LocalDateTime.now().plusDays(30)).build();
+
+        when(walletRepository.findByUser(user)).thenReturn(Optional.of(wallet));
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(clubMembershipRepository.findByUserAndActiveTrue(user)).thenReturn(Optional.of(membership));
+        when(productRepository.save(any(Product.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(purchasedProductRepository.save(any(PurchasedProduct.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(walletRepository.save(any(Wallet.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ShopService.CheckoutResult result = shopService.checkout(user, List.of(new ShopService.CartItem(1L, 3)));
+
+        assertThat(result.totalSpent()).isEqualByComparingTo("113.73");
+        assertThat(result.newBalance()).isEqualByComparingTo("86.27");
+    }
 }
