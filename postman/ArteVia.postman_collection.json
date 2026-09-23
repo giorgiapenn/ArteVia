@@ -1554,7 +1554,7 @@
                 }
               ]
             },
-            "description": "Atteso 200: il JWT e' stateless, resta valido fino a exp (max 15 min). Da spiegare all'orale."
+            "description": "Atteso 200: il JWT e' stateless, resta valido fino a exp (max 15 min)"
           },
           "protocolProfileBehavior": {
             "disableCookies": true,

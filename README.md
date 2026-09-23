@@ -984,7 +984,7 @@ Le classi di integrazione sono basate su `@SpringBootTest` e `MockMvc`.
 
 ### Test di concorrenza
 
-`ConcurrentCheckoutIntegrationTest` verifica uno scenario con stock disponibile = 1: due richieste avviate in parallelo su un pool di due thread, coordinate con un `CountDownLatch`. Una sola richiesta viene completata; l'altra viene rifiutata, per conflitto di versione rilevato da `@Version` (`409`) oppure per stock insufficiente se legge lo stock già aggiornato (`400`). Lo stock finale è sempre `0` e non diventa mai negativo.
+`ConcurrentCheckoutIntegrationTest` verifica uno scenario con stock disponibile = 1: due richieste eseguite su un pool di due thread e fatte partire nello stesso istante da un `CountDownLatch` di partenza; un secondo latch attende la fine di entrambe. Una sola richiesta viene completata; l'altra viene rifiutata, per conflitto di versione rilevato da `@Version` (`409`) oppure per stock insufficiente se legge lo stock già aggiornato (`400`). Lo stock finale è sempre `0` e non diventa mai negativo.
 
 ### Test manuali con Postman
 

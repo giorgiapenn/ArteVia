@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 @SpringBootTest
@@ -48,18 +49,28 @@ class ConcurrentCheckoutIntegrationTest {
 
         AtomicInteger successi = new AtomicInteger(0);
         ExecutorService pool = Executors.newFixedThreadPool(2);
-        CountDownLatch latch = new CountDownLatch(2);
+        CountDownLatch partenza = new CountDownLatch(1);
+        CountDownLatch fine = new CountDownLatch(2);
 
-        pool.submit(() -> eseguiCheckout(cookieA, carrello, successi, latch));
-        pool.submit(() -> eseguiCheckout(cookieB, carrello, successi, latch));
+        pool.submit(() -> { attendi(partenza); eseguiCheckout(cookieA, carrello, successi, fine); });
+        pool.submit(() -> { attendi(partenza); eseguiCheckout(cookieB, carrello, successi, fine); });
 
-        latch.await(10, TimeUnit.SECONDS);
+        partenza.countDown();
+        assertTrue(fine.await(10, TimeUnit.SECONDS), "I due checkout devono terminare entro 10 secondi");
         pool.shutdown();
 
         assertEquals(1, successi.get(), "Solo UNO dei due checkout concorrenti deve riuscire, non entrambi");
 
         Product ricontrollato = productRepository.findById(ultimoPezzo.getId()).orElseThrow();
         assertEquals(0, ricontrollato.getStockQuantity(), "Lo stock finale deve essere 0, mai negativo");
+    }
+
+    private void attendi(CountDownLatch partenza) {
+        try {
+            partenza.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     private void eseguiCheckout(Cookie[] cookies, String carrello, AtomicInteger successi, CountDownLatch latch) {
