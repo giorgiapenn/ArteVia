@@ -18,17 +18,19 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> handleBadRequest(IllegalArgumentException ex) {
+        log.error("Richiesta rifiutata: {}", ex.getMessage());
         return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
     }
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<Map<String, String>> handleConflict(IllegalStateException ex) {
+        log.error("Stato applicativo incoerente: {}", ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", ex.getMessage()));
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Map<String, String>> handleAccessDenied(AccessDeniedException ex) {
-        log.warn("Accesso negato: {}", ex.getMessage());
+        log.error("Accesso negato: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Non hai i permessi per questa operazione"));
     }
 
@@ -50,25 +52,26 @@ public class GlobalExceptionHandler {
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getFieldErrors().forEach(error ->
             errors.put(error.getField(), error.getDefaultMessage()));
+        log.error("Validazione fallita sui campi: {}", errors.keySet());
         return ResponseEntity.badRequest().body(errors);
     }
 
     @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
     public ResponseEntity<Map<String, String>> handleDataIntegrity(org.springframework.dao.DataIntegrityViolationException ex) {
-        log.warn("Vincolo di integrità violato: {}", ex.getMessage());
+        log.error("Vincolo di integrità violato: {}", ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Risorsa già esistente o vincolo violato"));
     }
 
     @ExceptionHandler(org.springframework.orm.ObjectOptimisticLockingFailureException.class)
     public ResponseEntity<Map<String, String>> handleOptimisticLock(Exception ex) {
-        log.warn("Conflitto di aggiornamento concorrente: {}", ex.getMessage());
+        log.error("Conflitto di aggiornamento concorrente: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(Map.of("error", "La risorsa è stata modificata da un'altra operazione concorrente, riprova"));
     }
 
     @ExceptionHandler(ExternalServiceUnavailableException.class)
     public ResponseEntity<Map<String, String>> handleExternalService(ExternalServiceUnavailableException ex) {
-        log.warn("Servizio esterno non disponibile: {}", ex.getMessage());
+        log.error("Servizio esterno non disponibile: {}", ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("error", "Servizio esterno temporaneamente non disponibile"));
     }
 
@@ -82,21 +85,25 @@ public class GlobalExceptionHandler {
             org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class,
             ArithmeticException.class})
     public ResponseEntity<Map<String, String>> handleMalformedRequest(Exception ex) {
+        log.error("Richiesta malformata: {}", ex.getMessage());
         return ResponseEntity.badRequest().body(Map.of("error", "Richiesta non valida"));
     }
 
     @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
     public ResponseEntity<Map<String, String>> handleNotFound(Exception ex) {
+        log.error("Risorsa non trovata: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Risorsa non trovata"));
     }
 
     @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<Map<String, String>> handleMethodNotAllowed(Exception ex) {
+        log.error("Metodo non consentito: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(Map.of("error", "Metodo non consentito"));
     }
 
     @ExceptionHandler(org.springframework.web.HttpMediaTypeNotSupportedException.class)
     public ResponseEntity<Map<String, String>> handleMediaType(Exception ex) {
+        log.error("Content-Type non supportato: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(Map.of("error", "Content-Type non supportato"));
     }
 }
