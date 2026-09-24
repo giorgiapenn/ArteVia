@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -64,7 +65,13 @@ public class JwtFilter extends OncePerRequestFilter {
             return null;
         }
 
-        var result = refreshTokenService.silentRefresh(refreshTokenValue);
+        RefreshTokenService.SilentRefreshResult result;
+        try {
+            result = refreshTokenService.silentRefresh(refreshTokenValue);
+        } catch (ObjectOptimisticLockingFailureException ex) {
+            logger.debug("Refresh silenzioso già eseguito da una richiesta concorrente");
+            return null;
+        }
         if (result == null) {
             return null;
         }
