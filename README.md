@@ -595,8 +595,7 @@ Il file `.env.example` elenca le variabili da impostare; Spring Boot non lo legg
 ./mvnw clean package -DskipTests
 ```
 
-Su Windows: `mvnw.cmd clean package -DskipTests`
-
+Su Windows (PowerShell): `.\mvnw.cmd clean package -DskipTests`
 ### 6. Avvio
 
 ```bash
@@ -650,7 +649,7 @@ INSERT INTO club_plan (name, price, duration_days, discount_percentage) VALUES
 
 ### 10.2 Accesso REST
 
-Tutte le funzioni sono disponibili anche come REST API, senza passare dal sito. Tutti gli endpoint hanno il prefisso `/api/v1` (elenco completo nella sezione [REST API](#rest-api)).
+Tutte le funzioni sono disponibili anche come REST API, senza passare dal sito. Tutti gli endpoint hanno il prefisso `/api/v1` (elenco completo nella sezione [REST API](#14-rest-api)).
 
 1. `POST /api/v1/auth/login` con username (o email) e password: la risposta contiene `accessToken` e `refreshToken`.
 2. Ogni richiesta successiva a un endpoint protetto invia l'access token nell'header:
@@ -691,7 +690,7 @@ I client che gestiscono i cookie possono usare in alternativa `accessToken` e `r
 I valori presenti nel progetto sono destinati esclusivamente all'esecuzione locale.
 
 * `spring.datasource.password` e `jwt.secret` usano la sintassi `${VARIABILE:default}`: se `DB_PASSWORD` o `JWT_SECRET` sono definite nell'ambiente (passo 4 dell'avvio) viene usato il loro valore, altrimenti quello dopo i due punti.
-* I valori di default sono stati scelti di proposito uguali a quelli di `docker-compose.yml`, così che l'applicazione si avvii anche senza configurare le variabili. In un ambiente reale i default andrebbero rimossi e i segreti forniti solo dall'ambiente.
+* I valori di default sono stati scelti di proposito: la password del database coincide con `POSTGRES_PASSWORD` di `docker-compose.yml` e la chiave JWT con quella di `.env.example`, così che l'applicazione si avvii anche senza configurare le variabili. In un ambiente reale i default andrebbero rimossi e i segreti forniti solo dall'ambiente.
 * Il keystore incluso nel repository (password `changeit`) contiene un certificato di sviluppo self-signed e non deve essere utilizzato in produzione.
 
 ### 11.2 Database di test
@@ -1041,7 +1040,6 @@ ArteVia è pensato come progetto didattico per lo studio congiunto di: sviluppo 
 Le credenziali, il certificato HTTPS e le configurazioni incluse nel repository sono esclusivamente destinate all'esecuzione locale e alla valutazione del progetto.
 
 ## 17. Glossario dei concetti di sicurezza
-### Glossario dei concetti di sicurezza
 
 Concetti di sicurezza adottati, con il modo in cui sono applicati e la loro collocazione nel codice.
 
@@ -1050,7 +1048,7 @@ Concetti di sicurezza adottati, con il modo in cui sono applicati e la loro coll
 | **Hashing delle password (BCrypt)** | Le password non vengono memorizzate in chiaro: si salva un hash con salt, non reversibile, e a ogni login si confronta l'hash.<br>**In ArteVia:** `BCryptPasswordEncoder`, usato in registrazione e in login tramite `DaoAuthenticationProvider`. La password richiesta ha 8-72 caratteri (72 è il limite di BCrypt, espresso in byte) e deve contenere maiuscola, minuscola, cifra e carattere speciale. | `WebSecurityConfig.passwordEncoder()`, `AuthService.register()`, `AuthService.login()`, `RegisterRequest` |
 | **JWT (access token)** | Token firmato che il server verifica (firma e scadenza) senza consultare il database.<br>**In ArteVia:** firma HMAC con la chiave `jwt.secret`; contiene solo lo username (subject), la data di emissione e la scadenza (15 minuti); **non contiene il ruolo**. Non viene revocato al logout: resta valido fino alla scadenza. | `JwtService`, `application.properties` (`jwt.*`) |
 | **Autenticazione stateless** | Il server non mantiene sessioni: ogni richiesta porta con sé le proprie credenziali.<br>**In ArteVia:** sessioni `STATELESS`; `JwtFilter` ricostruisce il `SecurityContext` a ogni richiesta leggendo il token dall'header `Authorization: Bearer` (ha la precedenza) o dal cookie `accessToken`, e ricarica utente e ruolo dal database. | `WebSecurityConfig.filterChain()`, `JwtFilter`, `UserDetailsServiceImpl.loadUserByUsername()` |
-| **Refresh token e rotazione** | Credenziale a lunga durata usata solo per ottenere nuovi access token. La rotazione la rende monouso: a ogni utilizzo viene invalidata e sostituita, quindi un token già usato non può essere riutilizzato.<br>**In ArteVia:** stringa casuale (UUID) salvata nel database con scadenza a 30 giorni; a ogni uso viene cancellata e ne viene emessa una nuova; un token sconosciuto o scaduto viene rifiutato; il logout lo cancella. Se due richieste parallele usano lo stesso token, solo la prima lo ruota e l'altra riceve `401`. | `AuthService.refresh()`, `AuthService.logout()`, `RefreshTokenService.silentRefresh()`, `JwtFilter.silentRefresh()`, `RefreshToken` |
+| **Refresh token e rotazione** | Credenziale a lunga durata usata solo per ottenere nuovi access token. La rotazione la rende monouso: a ogni utilizzo viene invalidata e sostituita, quindi un token già usato non può essere riutilizzato.<br>**In ArteVia:** stringa casuale (UUID) salvata nel database con scadenza a 30 giorni; a ogni uso viene cancellata e ne viene emessa una nuova; il logout la cancella. Un token sconosciuto o scaduto viene rifiutato con `400` su `/api/v1/auth/refresh` e con `401` nel refresh silenzioso. Se due richieste parallele usano lo stesso token, solo la prima lo ruota: nel refresh silenzioso l'altra riceve `401`, su `/api/v1/auth/refresh` riceve `409` o `400`. | `AuthService.refresh()`, `AuthService.logout()`, `RefreshTokenService.silentRefresh()`, `JwtFilter.silentRefresh()`, `RefreshToken` |
 | **Refresh silenzioso** | Rinnovo trasparente delle credenziali: se l'access token è scaduto ma il refresh token è valido, il server ne emette di nuovi senza un nuovo login.<br>**In ArteVia:** `JwtFilter` lo esegue per le richieste esterne a `/api/v1/auth/**`, usando il cookie `refreshToken`, e scrive i nuovi cookie nella risposta. | `JwtFilter.silentRefresh()`, `RefreshTokenService.silentRefresh()` |
 | **HTTPS / TLS** | Cifratura e autenticazione del canale tra client e server.<br>**In ArteVia:** l'applicazione risponde solo in HTTPS sulla porta 8443, con keystore PKCS12; il certificato incluso è self-signed, destinato allo sviluppo. | `application.properties` (`server.ssl.*`), `src/main/resources/keystore.p12` |
 | **Cookie `HttpOnly`, `Secure`, `SameSite`** | `HttpOnly`: il cookie non è leggibile da JavaScript (riduce l'impatto di un XSS). `Secure`: viene inviato solo su HTTPS. `SameSite=Lax`: il browser non lo invia nei POST provenienti da altri siti.<br>**In ArteVia:** entrambi i cookie di autenticazione (`accessToken`, `refreshToken`) hanno i tre attributi, con `path=/`; il logout li azzera con `maxAge=0`. | `CookieUtils.addAuthCookie()`, `AuthController`, `JwtFilter` |
