@@ -63,18 +63,27 @@ public class AuthService {
     }
 
     public TokenResponse login(LoginRequest req) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(req.usernameOrEmail(), req.password()));
+        var username = resolveUsername(req.usernameOrEmail());
 
-        var user = userRepository.findByUsername(req.usernameOrEmail())
-                .or(() -> userRepository.findByEmail(req.usernameOrEmail()))
-                .orElseThrow();
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(username, req.password()));
+
+        var user = userRepository.findByUsername(username).orElseThrow();
 
         var accessToken = jwtService.generateAccessToken(user.getUsername());
         var refreshToken = issueRefreshToken(user);
 
         return new TokenResponse(accessToken, refreshToken.getToken(), "Bearer",
                 jwtService.getAccessTokenExpirationMs() / 1000, refreshTokenExpirationMs / 1000);
+    }
+
+    private String resolveUsername(String usernameOrEmail) {
+        if (usernameOrEmail.contains("@")) {
+            return userRepository.findByEmail(usernameOrEmail)
+                    .map(User::getUsername)
+                    .orElse(usernameOrEmail);
+        }
+        return usernameOrEmail;
     }
 
     @Transactional
