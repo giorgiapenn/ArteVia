@@ -109,8 +109,8 @@ Per ogni articolo il server:
 3. recupera il prezzo corrente;
 4. calcola il totale, applicando l'eventuale sconto Insider attivo;
 5. verifica il saldo;
-6. aggiorna stock e wallet;
-7. registra l'acquisto.
+6. aggiorna lo stock e registra l'acquisto;
+7. addebita il totale sul wallet.
 
 L'intera operazione viene eseguita in una singola transazione.
 
@@ -295,7 +295,6 @@ erDiagram
 | `PurchasedProduct` | Registrazione di un acquisto                               |
 | `ClubPlan`         | Piano di abbonamento Insider (nome, prezzo, sconto, durata) |
 | `ClubMembership`   | Abbonamento attivo di un utente a un piano, con validità    |
-| `Role`             | Ruoli `USER` e `ADMIN`                                     |
 
 ---
 
@@ -344,10 +343,8 @@ L'access token è un JWT:
 
 * durata: 15 minuti;
 * firma HMAC;
-* `HttpOnly`;
-* `Secure`;
-* `SameSite=Lax`;
-* subject contenente lo username.
+* subject contenente lo username;
+* inviato al browser in un cookie `HttpOnly`, `Secure` e `SameSite=Lax`.
 
 Il JWT non contiene il ruolo dell'utente. Questo permette al sistema di non utilizzare un ruolo eventualmente diventato obsoleto nel token: il ruolo viene invece recuperato dal database quando viene costruito il contesto di autenticazione.
 
@@ -401,7 +398,7 @@ ADMIN (solo ruolo ADMIN)
  |-- inserimento prodotti nel catalogo        POST /api/v1/admin/products
 ```
 
-Una richiesta non autenticata verso `/api/**` riceve `401 Unauthorized` (JSON); una richiesta non autenticata verso una pagina viene reindirizzata a `/auth/login`. Un utente autenticato che non ha il ruolo richiesto riceve `403 Forbidden`.
+Una richiesta non autenticata verso `/api/**` o `/actuator/**` riceve `401 Unauthorized` (JSON); una richiesta non autenticata verso una pagina viene reindirizzata a `/auth/login`. Un utente autenticato che non ha il ruolo richiesto riceve `403 Forbidden`.
 
 Gli endpoint amministrativi utilizzano:
 
@@ -511,21 +508,38 @@ sequenceDiagram
 
     U->>API: POST /api/v1/shop/checkout
     API->>S: checkout(utente, items)
+    Note over S,DB: inizio transazione (@Transactional)
     S->>S: unisce le righe dello stesso prodotto
-    S->>DB: recupera wallet
+    S->>DB: legge il wallet
     DB-->>S: wallet
-    S->>DB: recupera prodotti
-    DB-->>S: prodotti (prezzo e stock)
-    S->>S: verifica esistenza e stock
-    S->>DB: recupera abbonamento attivo
+    loop per ogni articolo
+        S->>DB: legge il prodotto
+        DB-->>S: prodotto (prezzo e stock)
+        break prodotto inesistente o stock insufficiente
+            S-->>API: errore (rollback)
+            API-->>U: 400
+        end
+    end
+    S->>DB: legge l'abbonamento attivo
     DB-->>S: abbonamento
-    S->>S: calcola il totale scontato e verifica il saldo
-    S->>DB: aggiorna stock
-    S->>DB: registra acquisto
-    S->>DB: aggiorna saldo
-    DB-->>S: commit
-    S-->>API: risultato
-    API-->>U: 200 con totale e nuovo saldo
+    S->>S: calcola il totale scontato
+    break saldo insufficiente
+        S-->>API: errore (rollback)
+        API-->>U: 400
+    end
+    loop per ogni articolo
+        S->>S: riduce lo stock
+        S->>DB: registra l'acquisto nello storico
+    end
+    S->>S: scala il totale dal saldo
+    Note over S,DB: commit: salva stock e saldo con controllo @Version
+    alt versione cambiata da una richiesta concorrente
+        S-->>API: conflitto (rollback)
+        API-->>U: 409
+    else nessun conflitto
+        S-->>API: totale e nuovo saldo
+        API-->>U: 200
+    end
 ```
 
 ---
@@ -596,6 +610,7 @@ Il file `.env.example` elenca le variabili da impostare; Spring Boot non lo legg
 ```
 
 Su Windows (PowerShell): `.\mvnw.cmd clean package -DskipTests`
+
 ### 6. Avvio
 
 ```bash
