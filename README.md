@@ -12,26 +12,27 @@ L'applicazione è accessibile tramite **HTTPS** e mette a disposizione sia un'in
 
 ## Indice
 
-* [Panoramica](#panoramica)
-* [Funzionalità](#funzionalità)
-* [Tecnologie](#tecnologie)
-* [Architettura](#architettura)
-* [Modello dati](#modello-dati)
-* [Screenshot dell'applicazione](#screenshot-dellapplicazione)
-* [Security Design](#security-design)
-* [Flussi principali](#flussi-principali)
-* [Avvio del progetto](#avvio-del-progetto)
-* [Utilizzo](#utilizzo)
-* [Configurazione](#configurazione)
-* [Gestione degli utenti amministratori](#gestione-degli-utenti-amministratori)
-* [Struttura del progetto](#struttura-del-progetto)
-* [REST API](#rest-api)
-* [Verifica e test](#verifica-e-test)
-* [Stato del progetto](#stato-del-progetto)
+1. [Panoramica](#1-panoramica)
+2. [Funzionalità](#2-funzionalità)
+3. [Tecnologie](#3-tecnologie)
+4. [Architettura](#4-architettura)
+5. [Modello dati](#5-modello-dati)
+6. [Screenshot dell'applicazione](#6-screenshot-dellapplicazione)
+7. [Security Design](#7-security-design)
+8. [Flussi principali](#8-flussi-principali)
+9. [Avvio del progetto](#9-avvio-del-progetto)
+10. [Utilizzo](#10-utilizzo)
+11. [Configurazione](#11-configurazione)
+12. [Gestione degli utenti amministratori](#12-gestione-degli-utenti-amministratori)
+13. [Struttura del progetto](#13-struttura-del-progetto)
+14. [REST API](#14-rest-api)
+15. [Verifica e test](#15-verifica-e-test)
+16. [Stato del progetto](#16-stato-del-progetto)
+17. [Glossario dei concetti di sicurezza](#17-glossario-dei-concetti-di-sicurezza)
 
 ---
 
-## Panoramica
+## 1. Panoramica
 
 ArteVia utilizza un'architettura monolitica organizzata secondo una separazione tra:
 
@@ -53,13 +54,13 @@ Le operazioni che modificano contemporaneamente più risorse, come il checkout, 
 
 ---
 
-## Funzionalità
+## 2. Funzionalità
 
-### Account e accesso
+### 2.1 Account e accesso
 
 La registrazione crea un normale account `USER` e associa automaticamente un wallet.
 
-L'accesso può essere effettuato utilizzando username oppure email. Dopo l'autenticazione vengono gestiti:
+L'accesso può essere effettuato utilizzando username oppure email: un identificativo che contiene `@` viene cercato solo come email (gli username non possono contenere `@`), altrimenti solo come username. Dopo l'autenticazione vengono gestiti:
 
 * access token JWT;
 * refresh token persistito;
@@ -71,7 +72,7 @@ L'accesso può essere effettuato utilizzando username oppure email. Dopo l'auten
 
 Il ruolo dell'utente non viene inserito nel JWT: viene recuperato dal database quando viene costruito il contesto di sicurezza.
 
-### Wallet
+### 2.2 Wallet
 
 Ogni account dispone di un wallet virtuale utilizzabile per le operazioni del marketplace.
 
@@ -84,7 +85,7 @@ Sono disponibili:
 
 Il wallet non rappresenta un sistema di pagamento reale: viene utilizzato esclusivamente come meccanismo interno al progetto.
 
-### Catalogo
+### 2.3 Catalogo
 
 Il catalogo comprende diverse tipologie di prodotti, tra cui:
 
@@ -97,7 +98,7 @@ Ogni prodotto dispone di prezzo, descrizione, categoria e quantità disponibile.
 
 Gli utenti possono consultare il catalogo e aggiungere gli articoli al carrello.
 
-### Acquisti
+### 2.4 Acquisti
 
 Il checkout non utilizza i prezzi ricevuti dal browser come fonte attendibile.
 
@@ -113,11 +114,11 @@ Per ogni articolo il server:
 
 L'intera operazione viene eseguita in una singola transazione.
 
-### Insider Club
+### 2.5 Insider Club
 
 Gli utenti possono sottoscrivere un abbonamento Insider (piani con durata e sconto configurabili) che applica uno sconto percentuale automatico su ogni acquisto nel negozio. L'abbonamento attivo viene verificato lato server ad ogni checkout: il totale non è mai calcolato o modificato dal client, ma ricalcolato interamente dal backend leggendo lo stato reale dell'abbonamento dell'utente sul database, per evitare manomissioni dello sconto.
 
-### Opera in evidenza
+### 2.6 Opera in evidenza
 
 L'applicazione integra l'API pubblica dell'**Art Institute of Chicago**.
 
@@ -125,7 +126,7 @@ La funzionalità `/api/v1/artwork/featured` recupera un'opera dalla collezione (
 
 L'accesso al servizio esterno viene effettuato attraverso `WebClient` (con timeout di connessione e risposta configurati) e protetto da un rate limiter per singolo utente. L'immagine dell'opera non viene caricata direttamente dal browser verso il CDN esterno, ma scaricata dal server e inoltrata al client tramite un endpoint proxy dedicato (`/api/v1/artwork/image/{imageId}`): evita così che il browser blocchi la richiesta cross-origin (Opaque Response Blocking) e che eventuali protezioni anti-hotlink del CDN esterno impediscano la visualizzazione.
 
-### Funzionalità amministrative
+### 2.7 Funzionalità amministrative
 
 Gli utenti con ruolo `ADMIN` possono aggiungere nuovi prodotti al catalogo tramite endpoint dedicati.
 
@@ -133,7 +134,7 @@ Il ruolo non può essere specificato durante la registrazione e gli endpoint amm
 
 ---
 
-## Tecnologie
+## 3. Tecnologie
 
 | Area                 | Tecnologia                   | Versione               |
 | -------------- | ------------------- | ---------------- |
@@ -154,7 +155,7 @@ Il ruolo non può essere specificato durante la registrazione e gli endpoint amm
 
 ---
 
-## Architettura
+## 4. Architettura
 
 L'elaborazione di una richiesta segue una catena simile a quella mostrata di seguito:
 
@@ -206,8 +207,9 @@ flowchart TB
     REPO --> PG
     AWS -->|WebClient + Resilience4j| EXT
 ```
+`AdminController` espone solo l'inserimento dei prodotti e usa `ProductService`; un utente con ruolo `ADMIN` può usare anche tutti gli endpoint di `ApiController`, che richiedono soltanto l'autenticazione.
 
-### Livelli principali
+### 4.1 Livelli principali
 
 **Security layer**
 
@@ -252,7 +254,7 @@ Le entity non vengono utilizzate direttamente come contratto della REST API: le 
 
 ---
 
-## Modello dati
+## 5. Modello dati
 
 Le principali relazioni tra le entità sono:
 
@@ -282,7 +284,7 @@ erDiagram
     }
 ```
 
-### Entità principali
+### 5.1 Entità principali
 
 | Entità             | Responsabilità                                          |
 | ------------- | --------------------------------------- |
@@ -297,42 +299,42 @@ erDiagram
 
 ---
 
-## Screenshot dell'applicazione
+## 6. Screenshot dell'applicazione
 
-### Home
+### 6.1 Home
 ![Home](screenshots/home.png)
 
-### Registrazione
+### 6.2 Registrazione
 ![Registrazione](screenshots/registrazione_1.png)
 
-### Validazione campi in fase di registrazione
+### 6.3 Validazione campi in fase di registrazione
 ![Registrazione dettaglio](screenshots/registrazione_2.png)
 
-### Login
+### 6.4 Login
 ![Login](screenshots/login.png)
 
-### Shop
+### 6.5 Shop
 ![Shop](screenshots/shop.png)
 
-### Carrello
+### 6.6 Carrello
 ![Carrello](screenshots/carrello.png)
 
-### Abbonamenti
+### 6.7 Abbonamenti
 ![Abbonamenti](screenshots/abbonamenti.png)
 
-### Storico Acquisti
+### 6.8 Storico Acquisti
 ![Storico](screenshots/storico.png)
 
-### Opera del giorno
+### 6.9 Opera del giorno
 ![Opera del giorno](screenshots/opera.png)
 
 ---
 
-## Security Design
+## 7. Security Design
 
 La sicurezza non è concentrata in un unico componente, ma viene applicata in diversi punti del flusso di una richiesta.
 
-### Autenticazione
+### 7.1 Autenticazione
 
 ArteVia utilizza due token con responsabilità differenti.
 
@@ -374,26 +376,29 @@ Quando un refresh token viene utilizzato con successo, il valore precedente vien
 
 Il `JwtFilter` controlla le richieste in ingresso. Quando l'access token non è più valido perché scaduto, il filtro può utilizzare il refresh token ancora valido per generare una nuova coppia di credenziali. Il meccanismo è trasparente al browser e non richiede un nuovo login.
 
-### Controllo degli accessi
+Se più richieste parallele arrivano con lo stesso refresh token, solo la prima esegue la rotazione: le altre ricevono `401`, senza generare errori `500`.
+
+### 7.2 Controllo degli accessi
 
 Le funzionalità applicative non sono tutte disponibili allo stesso livello.
 
 ```text
-PUBLIC
- |-- registration
- |-- login / refresh / logout
- |-- pagine /, /auth/login, /auth/register e risorse statiche
- |-- /actuator/health
+PUBLIC (nessuna autenticazione)
+ |-- registrazione, login, refresh, logout    /api/v1/auth/**
+ |-- pagine home, login e registrazione       /, /auth/**
+ |-- risorse statiche                         /css/**, /js/**, /images/**
+ |-- stato dell'applicazione                  /actuator/health
 
-USER
- |-- wallet
- |-- catalog
- |-- artwork
- |-- membership
- |-- checkout
+USER (qualsiasi utente autenticato, compreso ADMIN)
+ |-- wallet e ricarica                        /api/v1/wallet/**
+ |-- catalogo, carrello e checkout            /api/v1/products, /api/v1/shop/**
+ |-- storico acquisti                         /api/v1/user/shop/history
+ |-- piani e abbonamento Insider              /api/v1/plans, /api/v1/membership/**
+ |-- opera in evidenza e immagine             /api/v1/artwork/**
+ |-- pagine profilo e negozio                 /home/**
 
-ADMIN
- |-- catalog administration
+ADMIN (solo ruolo ADMIN)
+ |-- inserimento prodotti nel catalogo        POST /api/v1/admin/products
 ```
 
 Una richiesta non autenticata verso `/api/**` riceve `401 Unauthorized` (JSON); una richiesta non autenticata verso una pagina viene reindirizzata a `/auth/login`. Un utente autenticato che non ha il ruolo richiesto riceve `403 Forbidden`.
@@ -406,7 +411,7 @@ Gli endpoint amministrativi utilizzano:
 
 Il ruolo non viene accettato come parametro durante la registrazione. Un nuovo account viene sempre creato come `USER`.
 
-### Protezione delle operazioni di checkout
+### 7.3 Protezione delle operazioni di checkout
 
 Il checkout rappresenta una delle operazioni più delicate perché modifica contemporaneamente più risorse.
 
@@ -421,18 +426,19 @@ Il server non considera attendibili né il prezzo né lo stock ricevuti dal clie
 **Proprietà che il checkout deve preservare:**
 
 ```text
-prezzo reale dei prodotti (letto dal DB)
-      =
-totale verificato
+per ogni prodotto:
+quantità richiesta  <=  stock disponibile (letto dal DB)
 
-totale verificato
-      <=
-saldo disponibile
+prezzo unitario pagato  =  prezzo del DB × (100 − sconto dell'abbonamento attivo) / 100
+                           arrotondato a 2 decimali
+totale                  =  Σ (prezzo unitario pagato × quantità)
+
+totale  <=  saldo disponibile
 ```
 
 Solo dopo il superamento delle verifiche vengono aggiornati: stock, saldo, storico degli acquisti.
 
-### Validazione degli input
+### 7.4 Validazione degli input
 
 Le richieste HTTP vengono rappresentate tramite DTO specifici. Esempi: `RegisterRequest`, `LoginRequest`, `RechargeRequest`, `ProductCreateRequest`, `CheckoutRequest`, `BuyMembershipRequest`.
 
@@ -440,7 +446,7 @@ Le annotazioni Jakarta Validation vengono utilizzate per controllare, tra le alt
 
 Le entity JPA non costituiscono quindi direttamente il contratto di input dell'API.
 
-### Controlli di sicurezza implementati
+### 7.5 Controlli di sicurezza implementati
 
 | Scenario                                 | Meccanismo utilizzato                          |
 | ---------------------------- | --------------------------------- |
@@ -461,29 +467,40 @@ Le entity JPA non costituiscono quindi direttamente il contratto di input dell'A
 
 ---
 
-## Flussi principali
+## 8. Flussi principali
 
-### Autenticazione
+### 8.1 Autenticazione
 
 ```mermaid
 sequenceDiagram
     participant U as Client
     participant A as AuthController
     participant S as AuthService
-    participant DB as Database
+    participant AM as AuthenticationManager
+    participant DB as PostgreSQL
 
-    U->>A: POST /auth/login
-    A->>S: login(credentials)
-    S->>DB: verifica utente
-    DB-->>S: dati account
-    S->>S: genera JWT
-    S->>S: genera refresh token
-    S->>DB: salva refresh token
-    S-->>A: token pair
-    A-->>U: 200 + Set-Cookie
+    U->>A: POST /api/v1/auth/login
+    A->>S: login(usernameOrEmail, password)
+    alt identificativo con @
+        S->>DB: cerca l'utente per email
+        DB-->>S: username (se l'email non esiste resta l'identificativo)
+    else identificativo senza @
+        S->>S: usa l'identificativo come username
+    end
+    S->>AM: authenticate(username, password)
+    AM->>DB: carica l'utente per username
+    DB-->>AM: hash BCrypt e ruolo
+    AM->>AM: confronta la password con l'hash
+    AM-->>S: autenticazione riuscita (altrimenti 401)
+    S->>DB: recupera l'utente per username
+    DB-->>S: utente
+    S->>S: genera access token JWT (15 minuti)
+    S->>DB: salva refresh token (UUID, 30 giorni)
+    S-->>A: coppia di token
+    A-->>U: 200 + Set-Cookie accessToken e refreshToken
 ```
 
-### Acquisto
+### 8.2 Acquisto
 
 ```mermaid
 sequenceDiagram
@@ -492,22 +509,28 @@ sequenceDiagram
     participant S as ShopService
     participant DB as PostgreSQL
 
-    U->>API: POST /shop/checkout
-    API->>S: checkout(items)
-    S->>DB: recupera prodotti
-    S->>S: verifica quantità e calcola prezzi
+    U->>API: POST /api/v1/shop/checkout
+    API->>S: checkout(utente, items)
+    S->>S: unisce le righe dello stesso prodotto
     S->>DB: recupera wallet
+    DB-->>S: wallet
+    S->>DB: recupera prodotti
+    DB-->>S: prodotti (prezzo e stock)
+    S->>S: verifica esistenza e stock
+    S->>DB: recupera abbonamento attivo
+    DB-->>S: abbonamento
+    S->>S: calcola il totale scontato e verifica il saldo
     S->>DB: aggiorna stock
-    S->>DB: aggiorna saldo
     S->>DB: registra acquisto
+    S->>DB: aggiorna saldo
     DB-->>S: commit
     S-->>API: risultato
-    API-->>U: risposta
+    API-->>U: 200 con totale e nuovo saldo
 ```
 
 ---
 
-## Avvio del progetto
+## 9. Avvio del progetto
 
 ### Requisiti
 
@@ -536,14 +559,37 @@ In alternativa, un'istanza PostgreSQL 17+ locale con un database `ARTEVIA` creat
 Il progetto include già un keystore PKCS12 con un certificato autofirmato in `src/main/resources/keystore.p12`: non è necessario generarlo per avviare l'applicazione.
 
 #### Rigenerazione opzionale del keystore
-Se si vuole creare un nuovo certificato autofirmato (es. dopo la scadenza dei 365 giorni), da `src/main/resources`:
+Se si vuole creare un nuovo certificato autofirmato (es. dopo la scadenza dei 365 giorni), posizionarsi nella cartella delle risorse e rigenerare il file:
 
 ```bash
+cd src/main/resources
 keytool -genkeypair -alias https -keyalg RSA -keysize 2048 -storetype PKCS12 -keystore keystore.p12 -validity 365 -storepass changeit -dname "CN=localhost, OU=Dev, O=ArteVia, L=Roma, ST=Lazio, C=IT"
+cd ../../..
 ```
 
+### 4. Variabili d'ambiente (facoltativo)
 
-### 4. Compilazione
+La password del database e la chiave di firma dei JWT possono essere fornite tramite variabili d'ambiente. Il passo è facoltativo: se viene saltato, l'applicazione usa i valori di sviluppo descritti in [Credenziali e segreti](#111-credenziali-e-segreti).
+
+Le variabili valgono solo per il terminale in cui vengono impostate, quindi l'avvio (passo 6) va eseguito nello stesso terminale. `DB_PASSWORD` deve coincidere con `POSTGRES_PASSWORD` di `docker-compose.yml`.
+
+Linux / macOS:
+
+```bash
+export DB_PASSWORD=postgres
+export JWT_SECRET='unaChiaveCasualeDiAlmeno32Caratteri'
+```
+
+Windows (PowerShell):
+
+```powershell
+$env:DB_PASSWORD="postgres"
+$env:JWT_SECRET="unaChiaveCasualeDiAlmeno32Caratteri"
+```
+
+Il file `.env.example` elenca le variabili da impostare; Spring Boot non lo legge automaticamente.
+
+### 5. Compilazione
 
 ```bash
 ./mvnw clean package -DskipTests
@@ -551,7 +597,7 @@ keytool -genkeypair -alias https -keyalg RSA -keysize 2048 -storetype PKCS12 -ke
 
 Su Windows: `mvnw.cmd clean package -DskipTests`
 
-### 5. Avvio
+### 6. Avvio
 
 ```bash
 ./mvnw spring-boot:run
@@ -559,7 +605,7 @@ Su Windows: `mvnw.cmd clean package -DskipTests`
 
 L'applicazione sarà disponibile su `https://localhost:8443`. Con `spring.jpa.hibernate.ddl-auto=update`, Hibernate crea le tabelle mancanti all'avvio.
 
-### 6. Dati iniziali
+### 7. Dati iniziali
 
 ```sql
 INSERT INTO product (name, description, price, stock_quantity, category, version) VALUES
@@ -579,9 +625,9 @@ INSERT INTO club_plan (name, price, duration_days, discount_percentage) VALUES
 
 ---
 
-## Utilizzo
+## 10. Utilizzo
 
-### Interfaccia web
+### 10.1 Interfaccia web
 
 1. aprire `https://localhost:8443`;
 2. creare un account;
@@ -602,21 +648,24 @@ INSERT INTO club_plan (name, price, duration_days, discount_percentage) VALUES
 |-- /home/shop
 ```
 
-### Accesso REST
+### 10.2 Accesso REST
 
-```text
-/api/v1
-```
+Tutte le funzioni sono disponibili anche come REST API, senza passare dal sito. Tutti gli endpoint hanno il prefisso `/api/v1` (elenco completo nella sezione [REST API](#rest-api)).
+
+1. `POST /api/v1/auth/login` con username (o email) e password: la risposta contiene `accessToken` e `refreshToken`.
+2. Ogni richiesta successiva a un endpoint protetto invia l'access token nell'header:
 
 ```http
 Authorization: Bearer <access-token>
 ```
 
-In alternativa, i client che supportano i cookie possono utilizzare `accessToken` e `refreshToken`.
+3. Dopo 15 minuti l'access token scade: si ottiene una nuova coppia con `POST /api/v1/auth/refresh` inviando il refresh token.
+
+I client che gestiscono i cookie possono usare in alternativa `accessToken` e `refreshToken` impostati dal login.
 
 ---
 
-## Configurazione
+## 11. Configurazione
 
 `src/main/resources/application.properties`:
 
@@ -637,37 +686,19 @@ In alternativa, i client che supportano i cookie possono utilizzare `accessToken
 | `server.ssl.key-alias`                                 | Alias certificato                          | `https`                                    |
 | `management.endpoints.web.exposure.include`            | Endpoint Actuator esposti                  | `health,info`                              |
 
-### Credenziali e segreti
+### 11.1 Credenziali e segreti
 
 I valori presenti nel progetto sono destinati esclusivamente all'esecuzione locale.
 
-La password del database e la chiave di firma dei JWT vengono lette dalle variabili d'ambiente `DB_PASSWORD` e `JWT_SECRET`; se non sono definite, Spring utilizza i valori di default presenti in `application.properties`, adatti solo allo sviluppo.
+* `spring.datasource.password` e `jwt.secret` usano la sintassi `${VARIABILE:default}`: se `DB_PASSWORD` o `JWT_SECRET` sono definite nell'ambiente (passo 4 dell'avvio) viene usato il loro valore, altrimenti quello dopo i due punti.
+* I valori di default sono stati scelti di proposito uguali a quelli di `docker-compose.yml`, così che l'applicazione si avvii anche senza configurare le variabili. In un ambiente reale i default andrebbero rimossi e i segreti forniti solo dall'ambiente.
+* Il keystore incluso nel repository (password `changeit`) contiene un certificato di sviluppo self-signed e non deve essere utilizzato in produzione.
 
-Il file `.env.example` è un modello dei valori da impostare: Spring Boot non lo legge automaticamente, quindi le variabili vanno impostate nella shell prima dell'avvio. `DB_PASSWORD` deve coincidere con `POSTGRES_PASSWORD` di `docker-compose.yml`.
-
-Linux / macOS:
-
-```bash
-export DB_PASSWORD=postgres
-export JWT_SECRET='unaChiaveCasualeDiAlmeno32Caratteri'
-./mvnw spring-boot:run
-```
-
-Windows (PowerShell):
-
-```powershell
-$env:DB_PASSWORD="postgres"
-$env:JWT_SECRET="unaChiaveCasualeDiAlmeno32Caratteri"
-.\mvnw.cmd spring-boot:run
-```
-
-Il keystore incluso nel repository è un certificato di sviluppo self-signed e non deve essere utilizzato come certificato di produzione.
-
-### Database di test
+### 11.2 Database di test
 
 `src/test/resources/application.properties` utilizza H2 in-memory: l'esecuzione della suite di test non modifica il database PostgreSQL utilizzato dall'applicazione.
 
-### CORS
+### 11.3 CORS
 
 Il backend configura il Cross-Origin Resource Sharing (CORS) per consentire, in ambiente di sviluppo, richieste provenienti da eventuali frontend separati eseguiti sulle seguenti origini:
 
@@ -680,7 +711,7 @@ Il frontend Thymeleaf integrato nell'applicazione utilizza invece la stessa orig
 
 ---
 
-## Gestione degli utenti amministratori
+## 12. Gestione degli utenti amministratori
 
 La registrazione pubblica non permette di scegliere il ruolo dell'account. Il valore iniziale è sempre `USER`.
 
@@ -698,7 +729,7 @@ Poiché il ruolo viene recuperato dal database durante l'autenticazione della ri
 
 ---
 
-## Struttura del progetto
+## 13. Struttura del progetto
 
 ```text
 ArteVia/
@@ -829,11 +860,11 @@ ArteVia/
 
 ---
 
-## REST API
+## 14. REST API
 
 Base path `/api/v1`. Le operazioni che richiedono autenticazione accettano il JWT tramite cookie oppure `Authorization: Bearer <token>`.
 
-### Account
+### 14.1 Account
 
 #### `POST /api/v1/auth/register`
 Crea un nuovo account. **Accesso:** pubblico
@@ -877,7 +908,7 @@ Invalida il refresh token (letto dal cookie `refreshToken` oppure dal body `{ "r
 
 L'access token già emesso non viene revocato: essendo un JWT stateless resta valido fino alla sua scadenza naturale (al massimo 15 minuti). Per questo motivo la sua durata è volutamente breve.
 
-### Arte e contenuti
+### 14.2 Arte e contenuti
 
 #### `GET /api/v1/artwork/featured`
 Restituisce un'opera in evidenza proveniente dall'Art Institute of Chicago. **Accesso:** autenticato · **Rate limit:** 5 richieste/minuto per utente.
@@ -891,7 +922,7 @@ Scarica dal server l'immagine IIIF associata a un'opera e la inoltra al client c
 
 Se il servizio esterno non è raggiungibile, entrambi gli endpoint rispondono `503 Service Unavailable`.
 
-### Insider Club
+### 14.3 Insider Club
 
 #### `GET /api/v1/plans`
 Restituisce l'elenco dei piani Insider disponibili. **Accesso:** autenticato
@@ -902,7 +933,7 @@ Sottoscrive un piano Insider per l'utente autenticato. **Accesso:** autenticato
 { "planId": 1 }
 ```
 
-### Wallet
+### 14.4 Wallet
 
 #### `POST /api/v1/wallet/recharge`
 ```json
@@ -912,7 +943,7 @@ Sottoscrive un piano Insider per l'utente autenticato. **Accesso:** autenticato
 #### `GET /api/v1/wallet/mywallet`
 Restituisce il wallet associato all'utente autenticato.
 
-### Catalogo
+### 14.5 Catalogo
 
 #### `GET /api/v1/products`
 Restituisce i prodotti disponibili e il relativo stock. **Accesso:** autenticato
@@ -924,7 +955,7 @@ Inserisce un nuovo prodotto. **Accesso:** `ADMIN`
 ```
 Un utente autenticato senza ruolo amministrativo riceve `403 Forbidden`.
 
-### Acquisti
+### 14.6 Acquisti
 
 #### `GET /api/v1/user/shop/history`
 Restituisce lo storico degli acquisti dell'utente, dal più recente.
@@ -950,7 +981,7 @@ Risposta:
 ```
 ---
 
-## Verifica e test
+## 15. Verifica e test
 
 ```bash
 ./mvnw test
@@ -961,7 +992,7 @@ Risposta:
 
 I test utilizzano il database H2 in-memory configurato in `src/test/resources/application.properties`.
 
-### Test di integrazione
+### 15.1 Test di integrazione
 
 | Test | Verifica |
 | ---- | ------- |
@@ -976,17 +1007,17 @@ I test utilizzano il database H2 in-memory configurato in `src/test/resources/ap
 
 Le classi di integrazione sono basate su `@SpringBootTest` e `MockMvc`.
 
-### Test unitari dei servizi (Mockito)
+### 15.2 Test unitari dei servizi (Mockito)
 
 * `WalletServiceTest` - rifiuto di importi negativi o pari a zero, ricarica valida, errore in assenza di wallet;
-* `ShopServiceTest` - prodotto inesistente, stock insufficiente, saldo insufficiente senza modifica dello stock, applicazione dello sconto Insider con aggiornamento di stock e saldo, nessuno sconto con abbonamento scaduto, rifiuto di quantità che causerebbero overflow;
+* `ShopServiceTest` - prodotto inesistente, stock insufficiente, saldo insufficiente senza modifica dello stock, applicazione dello sconto Insider con aggiornamento di stock e saldo, nessuno sconto con abbonamento scaduto, rifiuto di quantità che causerebbero overflow, totale addebitato uguale alla somma dei prezzi unitari registrati nello storico;
 * `MembershipServiceTest` - piano inesistente, saldo insufficiente senza creazione dell'abbonamento, disattivazione dell'abbonamento precedente e addebito del nuovo piano.
 
-### Test di concorrenza
+### 15.3 Test di concorrenza
 
 `ConcurrentCheckoutIntegrationTest` verifica uno scenario con stock disponibile = 1: due richieste eseguite su un pool di due thread e fatte partire nello stesso istante da un `CountDownLatch` di partenza; un secondo latch attende la fine di entrambe. Una sola richiesta viene completata; l'altra viene rifiutata, per conflitto di versione rilevato da `@Version` (`409`) oppure per stock insufficiente se legge lo stock già aggiornato (`400`). Lo stock finale è sempre `0` e non diventa mai negativo.
 
-### Test manuali con Postman
+### 15.4 Test manuali con Postman
 
 La collection `postman/ArteVia.postman_collection.json` contiene 81 richieste con verifiche automatiche su: registrazione e mass assignment, attacchi al JWT (payload manomesso, `alg: none`, firma con chiave diversa), rotazione e riuso dei refresh token, refresh silenzioso, logout, validazione degli input, manomissione di prezzi e quantità, atomicità del checkout, sconto Insider, controllo degli accessi, rate limiting per utente, gestione degli errori e header di sicurezza.
 
@@ -997,18 +1028,47 @@ La collection `postman/ArteVia.postman_collection.json` contiene 81 richieste co
 
 Ogni esecuzione crea utenti con nomi univoci, quindi la collection può essere rieseguita senza svuotare il database.
 
-### Verifica manuale dell'escaping
+### 15.5 Verifica manuale dell'escaping
 
 La protezione dei dati dinamici visualizzati dal frontend utilizza `escapeHtml()` (e `th:text` di Thymeleaf per lo username). Verifica creando, tramite account amministratore, un prodotto con nome `<img src=x onerror=alert(1)>` (richiesta `10.4` della collection), poi aprendo `/home/shop`: il contenuto deve comparire come testo, non come codice HTML eseguito.
 
-### SonarLint
-
-Estensione IDE per l'analisi statica in tempo reale. Non richiede dipendenze Maven.
-
 ---
 
-## Stato del progetto
+## 16. Stato del progetto
 
 ArteVia è pensato come progetto didattico per lo studio congiunto di: sviluppo web con Spring Boot, autenticazione e autorizzazione, sicurezza delle API REST, gestione transazionale, concorrenza a livello database, integrazione con API esterne, testing automatico delle proprietà di sicurezza.
 
 Le credenziali, il certificato HTTPS e le configurazioni incluse nel repository sono esclusivamente destinate all'esecuzione locale e alla valutazione del progetto.
+
+## 17. Glossario dei concetti di sicurezza
+### Glossario dei concetti di sicurezza
+
+Concetti di sicurezza adottati, con il modo in cui sono applicati e la loro collocazione nel codice.
+
+| Concetto | Descrizione e applicazione in ArteVia | Riferimenti |
+| --- | --- | --- |
+| **Hashing delle password (BCrypt)** | Le password non vengono memorizzate in chiaro: si salva un hash con salt, non reversibile, e a ogni login si confronta l'hash.<br>**In ArteVia:** `BCryptPasswordEncoder`, usato in registrazione e in login tramite `DaoAuthenticationProvider`. La password richiesta ha 8-72 caratteri (72 è il limite di BCrypt, espresso in byte) e deve contenere maiuscola, minuscola, cifra e carattere speciale. | `WebSecurityConfig.passwordEncoder()`, `AuthService.register()`, `AuthService.login()`, `RegisterRequest` |
+| **JWT (access token)** | Token firmato che il server verifica (firma e scadenza) senza consultare il database.<br>**In ArteVia:** firma HMAC con la chiave `jwt.secret`; contiene solo lo username (subject), la data di emissione e la scadenza (15 minuti); **non contiene il ruolo**. Non viene revocato al logout: resta valido fino alla scadenza. | `JwtService`, `application.properties` (`jwt.*`) |
+| **Autenticazione stateless** | Il server non mantiene sessioni: ogni richiesta porta con sé le proprie credenziali.<br>**In ArteVia:** sessioni `STATELESS`; `JwtFilter` ricostruisce il `SecurityContext` a ogni richiesta leggendo il token dall'header `Authorization: Bearer` (ha la precedenza) o dal cookie `accessToken`, e ricarica utente e ruolo dal database. | `WebSecurityConfig.filterChain()`, `JwtFilter`, `UserDetailsServiceImpl.loadUserByUsername()` |
+| **Refresh token e rotazione** | Credenziale a lunga durata usata solo per ottenere nuovi access token. La rotazione la rende monouso: a ogni utilizzo viene invalidata e sostituita, quindi un token già usato non può essere riutilizzato.<br>**In ArteVia:** stringa casuale (UUID) salvata nel database con scadenza a 30 giorni; a ogni uso viene cancellata e ne viene emessa una nuova; un token sconosciuto o scaduto viene rifiutato; il logout lo cancella. Se due richieste parallele usano lo stesso token, solo la prima lo ruota e l'altra riceve `401`. | `AuthService.refresh()`, `AuthService.logout()`, `RefreshTokenService.silentRefresh()`, `JwtFilter.silentRefresh()`, `RefreshToken` |
+| **Refresh silenzioso** | Rinnovo trasparente delle credenziali: se l'access token è scaduto ma il refresh token è valido, il server ne emette di nuovi senza un nuovo login.<br>**In ArteVia:** `JwtFilter` lo esegue per le richieste esterne a `/api/v1/auth/**`, usando il cookie `refreshToken`, e scrive i nuovi cookie nella risposta. | `JwtFilter.silentRefresh()`, `RefreshTokenService.silentRefresh()` |
+| **HTTPS / TLS** | Cifratura e autenticazione del canale tra client e server.<br>**In ArteVia:** l'applicazione risponde solo in HTTPS sulla porta 8443, con keystore PKCS12; il certificato incluso è self-signed, destinato allo sviluppo. | `application.properties` (`server.ssl.*`), `src/main/resources/keystore.p12` |
+| **Cookie `HttpOnly`, `Secure`, `SameSite`** | `HttpOnly`: il cookie non è leggibile da JavaScript (riduce l'impatto di un XSS). `Secure`: viene inviato solo su HTTPS. `SameSite=Lax`: il browser non lo invia nei POST provenienti da altri siti.<br>**In ArteVia:** entrambi i cookie di autenticazione (`accessToken`, `refreshToken`) hanno i tre attributi, con `path=/`; il logout li azzera con `maxAge=0`. | `CookieUtils.addAuthCookie()`, `AuthController`, `JwtFilter` |
+| **CSRF** | Attacco in cui un sito terzo induce il browser della vittima a inviare richieste autenticate dai cookie.<br>**In ArteVia:** la protezione CSRF di Spring è disabilitata per scelta progettuale: ci si affida a `SameSite=Lax` e al fatto che le API accettano corpi JSON. | `WebSecurityConfig.filterChain()` |
+| **CORS** | Regola del browser che stabilisce quali altre origini possono chiamare le API.<br>**In ArteVia:** ammesse `http://localhost:5500` e `http://127.0.0.1:5500` (metodi `GET`, `POST`, `PUT`, `DELETE`, `OPTIONS`, credenziali incluse) per un eventuale frontend separato in sviluppo; il frontend Thymeleaf integrato usa la stessa origine e non ne ha bisogno. | `WebSecurityConfig.corsConfigurationSource()` |
+| **Header di sicurezza HTTP** | Intestazioni di risposta che istruiscono il browser (per esempio `Strict-Transport-Security`, `X-Frame-Options`, `X-Content-Type-Options`).<br>**In ArteVia:** non sono configurate a mano: sono quelle predefinite di Spring Security e vengono controllate dalla collection Postman. | `WebSecurityConfig`, Postman: cartella `09 - Errori, header e infrastruttura` |
+| **Controllo degli accessi (RBAC) e default-deny** | Autorizzazione in base al ruolo; con il "default-deny" tutto ciò che non è dichiarato pubblico richiede autenticazione.<br>**In ArteVia:** ruoli `USER` e `ADMIN`; sono pubbliche solo le rotte elencate in `permitAll`, il resto è `authenticated()`; gli endpoint amministrativi usano `@PreAuthorize("hasRole('ADMIN')")` (method security abilitata). Il ruolo è letto dal database a ogni richiesta ed è sempre `USER` alla registrazione. Senza autenticazione: `401` (JSON su `/api/**` e `/actuator/**`, redirect a `/auth/login` per le pagine); con ruolo insufficiente: `403`. | `WebSecurityConfig.filterChain()`, `AdminController.addProduct()`, `UserDetailsImpl.getAuthorities()`, `Role` |
+| **Mass assignment** | Il client valorizza campi che non dovrebbe poter impostare (per esempio `"role": "ADMIN"` in registrazione).<br>**In ArteVia:** le richieste passano da DTO che non contengono `role`; le entity JPA non sono mai il contratto di input; un campo iniettato viene ignorato. | `RegisterRequest`, `AuthService.register()`, `MassAssignmentIntegrationTest` |
+| **Validazione degli input** | Controllo di formato e limiti prima che i dati raggiungano la logica applicativa.<br>**In ArteVia:** Jakarta Validation sui DTO (`@NotBlank`, `@Email`, `@Pattern` sullo username `^[A-Za-z0-9_.-]{3,30}$`, `@Size`, `@DecimalMin`, `@DecimalMax`, `@Digits` sugli importi) con `@Valid` nei controller; le violazioni producono `400` con una mappa campo → messaggio. | package `dto`, `GlobalExceptionHandler.handleValidation()` |
+| **SQL injection** | Inserimento di frammenti SQL in un input che viene concatenato in una query.<br>**In ArteVia:** non c'è SQL scritto a mano (nessun `@Query`, query native o `EntityManager`): l'accesso ai dati usa solo repository Spring Data JPA con query derivate dal nome dei metodi, quindi parametrizzate. | package `repository` |
+| **Overflow e limiti sulle quantità** | Valori molto grandi possono superare l'intervallo di un intero e diventare negativi o nulli, falsando i totali.<br>**In ArteVia:** quantità per prodotto `@Max(100)`, carrello di al massimo 50 righe (`@Size(max = 50)`), righe duplicate unite con `Math.addExact`; un overflow lancia `ArithmeticException`, tradotta in `400`. | `CartItemRequest`, `CheckoutRequest`, `ShopService.mergeByProduct()`, `GlobalExceptionHandler` |
+| **Ricalcolo lato server (client non attendibile)** | Prezzi, sconti e disponibilità ricevuti dal client non sono affidabili: vanno riletti dalla fonte autorevole.<br>**In ArteVia:** il client invia solo id prodotto e quantità; il server rilegge prodotto, prezzo e stock dal database, verifica l'abbonamento Insider (attivo e con `endDate` futura) per applicare lo sconto, calcola il totale e controlla il saldo. | `ShopService.checkout()`, `ShopService.previewCart()` |
+| **Transazione** | Gruppo di operazioni sul database che riescono tutte o nessuna.<br>**In ArteVia:** `@Transactional` su registrazione (utente e wallet), rotazione dei refresh token, ricarica, acquisto di un piano e checkout (stock, saldo e storico acquisti si aggiornano insieme). | `ShopService.checkout()`, `MembershipService.buyPlan()`, `WalletService.recharge()`, `AuthService.register()`, `AuthService.refresh()` |
+| **Optimistic locking e lost update** | Se due operazioni modificano la stessa riga nello stesso momento, la seconda può sovrascrivere la prima senza accorgersene (lost update). Con l'optimistic locking ogni riga ha un numero di versione: se è cambiato, l'aggiornamento fallisce.<br>**In ArteVia:** `@Version` su `Product` e `Wallet`; il conflitto genera `ObjectOptimisticLockingFailureException`, tradotta in `409`. Il caso di due checkout sull'ultimo pezzo è esercitato da `ConcurrentCheckoutIntegrationTest`. | `Product`, `Wallet`, `GlobalExceptionHandler`, `ConcurrentCheckoutIntegrationTest` |
+| **Rate limiting** | Limite al numero di richieste in un intervallo di tempo.<br>**In ArteVia:** Resilience4j, con un limiter per utente e per endpoint (`articApi-<username>`, `articImage-<username>`) e configurazione condivisa `articApi` (5 richieste ogni 60 secondi, senza attesa). Si applica agli endpoint dell'opera in evidenza e dell'immagine; oltre il limite la risposta è `429`. | `ApiController.featuredArtwork()`, `ApiController.artworkImage()`, `application.properties` (`resilience4j.ratelimiter.*`), `GlobalExceptionHandler` |
+| **SSRF e proxy delle immagini** | Un server che scarica URL per conto del client può essere indotto a contattare destinazioni non volute (SSRF).<br>**In ArteVia:** l'endpoint proxy accetta solo un `imageId` che rispetta `^[a-zA-Z0-9-]{10,60}$` e lo inserisce in un URL con host fisso (`www.artic.edu`); il server scarica l'immagine e la inoltra al client, evitando blocchi cross-origin (Opaque Response Blocking) e restrizioni anti-hotlink del CDN. | `ArtworkOfDayService.fetchImageBytes()`, `ApiController.artworkImage()` |
+| **Timeout e indisponibilità dei servizi esterni** | Le chiamate a servizi terzi hanno un tempo massimo, per non bloccare l'applicazione se il servizio non risponde.<br>**In ArteVia:** `WebClient` con timeout di connessione (5 secondi) e di risposta, lettura e scrittura (8 secondi); un errore del servizio esterno diventa `ExternalServiceUnavailableException`, tradotta in `503`. | `WebClientConfig`, `ArtworkOfDayService`, `GlobalExceptionHandler` |
+| **XSS ed escaping** | Testo con codice (per esempio `<script>`) inserito da un utente e poi eseguito nel browser di altri. Si previene trattando ogni dato dinamico come testo.<br>**In ArteVia:** i valori scritti nella pagina con `innerHTML` passano da `escapeHtml()`; lo username è reso con `th:text` di Thymeleaf. La verifica manuale usa un prodotto con nome `<img src=x onerror=alert(1)>` (richiesta Postman `10.4`). | `templates/home/shop.html`, `templates/home/profile.html`, `templates/auth/login.html`, `templates/auth/register.html` |
+| **Gestione centralizzata degli errori** | Un unico punto traduce le eccezioni in risposte con formato uniforme.<br>**In ArteVia:** `@RestControllerAdvice` che restituisce `{"error": "..."}` con il codice HTTP appropriato (`400`, `401`, `403`, `409`, `429`, `503`, ...). | `GlobalExceptionHandler` |
+| **Gestione dei segreti e della configurazione** | Credenziali e chiavi non vanno scritte nel codice: si leggono dall'ambiente.<br>**In ArteVia:** `DB_PASSWORD` e `JWT_SECRET` sono lette dalle variabili d'ambiente, con valori di default validi solo per lo sviluppo; `.env.example` è il modello dei valori da impostare (Spring Boot non lo legge automaticamente). | `application.properties`, `.env.example` |
+| **Superficie esposta (Actuator)** | Gli endpoint di monitoraggio devono esporre solo ciò che serve.<br>**In ArteVia:** sono esposti solo `health` e `info`; `/actuator/health` è pubblico, il resto richiede autenticazione. | `application.properties` (`management.endpoints.web.exposure.include`), `WebSecurityConfig.filterChain()` |
